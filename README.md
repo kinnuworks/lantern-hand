@@ -1,6 +1,6 @@
 # Lantern Hand
 
-![Lantern Hand: your hand lights his way. Emulator footage of Wick on a windowsill at sunrise, next to the cut-paper title art](docs/thumbnail.png)
+![Lantern Hand: hold out your open hand and it becomes a lantern. Emulator footage of Wick sailing his paper boat across the floor](docs/readme-hero.png)
 
 Hold out your open hand and it becomes a paper lantern. A small paper traveller called Wick wakes on your real table and crosses your room toward your window (or, if it's behind you, the wall in front of you), walking only where you shine the light.
 
