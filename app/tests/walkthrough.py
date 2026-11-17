@@ -36,8 +36,22 @@ def shot(name):
         pathlib.Path(args.shots).mkdir(parents=True, exist_ok=True)
         cli("browser", "screenshot", "--output-file", str(pathlib.Path(args.shots) / f"{name}.png"))
 
+def record(result):
+    import datetime
+    root = APP.parent
+    commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=root, capture_output=True, text=True).stdout.strip()
+    dirty = subprocess.run(["git", "status", "--porcelain", "app/src"], cwd=root, capture_output=True, text=True).stdout.strip()
+    cfg = json.loads((APP / "iwsdk.config.json").read_text())
+    dev = cfg.get("dev", {}).get("emulator", {})
+    mode = "gaze" if args.gaze else ("knock" if args.knock else "hands")
+    line = f"| {datetime.datetime.now().isoformat(timespec='seconds')} | {commit}{' (uncommitted changes)' if dirty else ''} | {dev.get('device')} | {dev.get('environment')} | {mode} | {result} |\n"
+    out = root / "evidence" / "walkthroughs" / "runs.md"
+    if not out.exists():
+        out.write_text("# Emulator walkthrough runs\n\nEvery run of app/tests/walkthrough.py, appended automatically: emulated hands (or no hands for gaze) in Meta's Immersive Web Emulator. Emulator, not a headset.\n\n| Time | Commit | Device | Room | Mode | Result |\n|---|---|---|---|---|---|\n")
+    with out.open("a") as fh: fh.write(line)
+
 def fail(msg):
-    print("WALKTHROUGH FAIL:", msg); sys.exit(1)
+    print("WALKTHROUGH FAIL:", msg); record("FAIL: " + msg); sys.exit(1)
 
 cli("browser", "reload"); time.sleep(4)
 # Start from chapter one: use the landing page's own "Start again" link when progress is saved.
@@ -86,7 +100,7 @@ if args.gaze:
         if not done: fail(f"gaze: beat {s['beat']} never lit")
         if done[-1].split()[2] != "by-light": fail(f"gaze: beat {s['beat']} advanced by timeout")
         shot(f"gaze-{s['beat']}")
-    print("GAZE PASS: every beat lit by looking at it, no hands"); sys.exit(0)
+    print("GAZE PASS: every beat lit by looking at it, no hands"); record("PASS: every beat lit by looking, no hands"); sys.exit(0)
 
 # Relaxed hand first (no lantern), then open it.
 t_enter = time.time()
@@ -161,5 +175,6 @@ if not logs("^CHAPTER_END 2"): fail("chapter two did not end")
 shot("06-chapter-two")
 errs = [m for m in logs("error|Error") if "favicon" not in m]
 print("lit:", lit)
+record("PASS: lantern lit by an open hand; every beat lit by the hand's light" + ("; two knocks woke him" if args.knock else "") + "; chapter one ended; return visit played chapter two to the end")
 print("WALKTHROUGH PASS: lantern lit by an open hand; every beat lit by the hand's light; chapter ended; return visit played chapter two to the end",
       f"({len(errs)} console lines matching 'error')")
