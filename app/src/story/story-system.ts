@@ -57,6 +57,9 @@ export class StorySystem extends createSystem({}) {
   private glow!: Mesh;
   private night!: Mesh;
   private boat: Mesh | null = null;
+  private handHint: Mesh | null = null;
+  private knocks: number[] = [];
+  private tipWasUp = true;
   private moves: Move[] = [];
   private bob = 0;
   private walkAudio: PositionalAudio | null = null;
@@ -99,6 +102,15 @@ export class StorySystem extends createSystem({}) {
     this.glow.visible = false;
     this.root.add(this.glow);
 
+    void makeCutout(ART.handHint, 0.12).then((h) => {
+      this.handHint = h;
+      h.position.set(0, -0.2, -0.75);
+      (h.material as MeshBasicMaterial).depthTest = false;
+      (h.material as MeshBasicMaterial).transparent = true;
+      h.renderOrder = 9;
+      h.visible = false;
+      this.camera.add(h);
+    });
     void Promise.all([makeCutout(ART.asleep, TRAVELLER_H * 0.75), makeCutout(ART.lantern, 0.11)]).then(([t, l]) => {
       this.traveller = t;
       this.traveller.visible = false;
@@ -346,6 +358,40 @@ export class StorySystem extends createSystem({}) {
         this.caption.show('No hands needed: just look at the little glow and hold your gaze there.');
         this.onLanternLit();
         this.onLanternLit = null;
+      }
+    }
+
+    // A paper hand shows what to do, with no text: before the lantern is lit, and when the hand is lost.
+    if (this.handHint) {
+      const want = !this.gazeMode && this.phase !== 'done' && (!this.lanternLit ? this.phase === 'intro' : this.noHandFor > 3 && !!this.target && this.noHandFor < GAZE_AFTER);
+      const hm = this.handHint.material as MeshBasicMaterial;
+      hm.opacity += ((want ? 0.9 : 0) - hm.opacity) * Math.min(1, dt * 4);
+      this.handHint.visible = hm.opacity > 0.02;
+      this.handHint.scale.setScalar(1 + Math.sin(performance.now() / 400) * 0.06);
+    }
+
+    // Knock twice on the surface where he sleeps to wake him (a fingertip tapping the real table).
+    if (this.target && this.target.beat === 'table' && this.onLit) {
+      const plane = this.planes.find((p) => p.id === this.target!.planeId);
+      const h = this.hands.right.tracked ? this.hands.right : this.hands.left.tracked ? this.hands.left : null;
+      if (plane && h) {
+        const tip = h.index.y < h.middle.y ? h.index : h.middle;
+        const dy = tip.y - plane.center[1];
+        const inside = Math.abs((tip.x - plane.center[0]) * plane.axisX[0] + (tip.z - plane.center[2]) * plane.axisX[2]) < plane.halfX + 0.05 &&
+          Math.abs((tip.x - plane.center[0]) * plane.axisZ[0] + (tip.z - plane.center[2]) * plane.axisZ[2]) < plane.halfZ + 0.05;
+        const down = inside && dy < 0.025;
+        const now = performance.now() / 1000;
+        if (down && this.tipWasUp) {
+          this.knocks = this.knocks.filter((k) => now - k < 1.5);
+          this.knocks.push(now);
+          if (this.knocks.length >= 2) {
+            this.knocks = [];
+            void this.sound.at(this.traveller, SFX.knock);
+            console.log('KNOCK');
+            this.litFor = LIT_DWELL; // counts as lighting him
+          }
+        }
+        this.tipWasUp = dy > 0.05 ? true : down ? false : this.tipWasUp;
       }
     }
 

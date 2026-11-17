@@ -11,6 +11,9 @@ export interface HandState {
   dir: Vector3;
   /** Palm normal (out of the palm), world space, unit. */
   up: Vector3;
+  /** Index and middle fingertips, world space (for knocking on surfaces). */
+  index: Vector3;
+  middle: Vector3;
 }
 
 const JOINTS = [
@@ -63,6 +66,8 @@ export class Hands {
       }
       if (!ok) continue;
       st.tracked = true;
+      st.index.copy(this.pos['index-finger-tip']);
+      st.middle.copy(this.pos['middle-finger-tip']);
       const w = this.pos['wrist'];
       const mm = this.pos['middle-finger-metacarpal'];
       // Palm centre: between wrist and middle metacarpal.
@@ -94,5 +99,5 @@ export class Hands {
 }
 
 function blank(): HandState {
-  return { tracked: false, open: false, palm: new Vector3(), dir: new Vector3(0, 0, -1), up: new Vector3(0, 1, 0) };
+  return { tracked: false, open: false, palm: new Vector3(), dir: new Vector3(0, 0, -1), up: new Vector3(0, 1, 0), index: new Vector3(), middle: new Vector3() };
 }

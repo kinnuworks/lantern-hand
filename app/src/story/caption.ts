@@ -2,7 +2,7 @@ import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace }
 import type { Object3D } from '@iwsdk/core';
 
 /**
- * One line of caption, locked low in the view: 1 m away, 16 degrees below centre,
+ * One line of caption, locked high in the view: 1 m away, 11 degrees above centre,
  * 0.6 m wide, so it stays inside the 58 x 54 degree design area of Meta VR Glasses.
  */
 export class Caption {
@@ -21,8 +21,8 @@ export class Caption {
     this.tex.colorSpace = SRGBColorSpace;
     const mat = new MeshBasicMaterial({ map: this.tex, transparent: true, depthTest: false, depthWrite: false, opacity: 0 });
     this.mesh = new Mesh(new PlaneGeometry(0.66, 0.113), mat);
-    this.mesh.position.set(0, -0.33, -1.0);
-    this.mesh.rotation.x = 0.28;
+    this.mesh.position.set(0, 0.2, -1.0);
+    this.mesh.rotation.x = -0.18;
     this.mesh.renderOrder = 10;
     camera.add(this.mesh);
   }

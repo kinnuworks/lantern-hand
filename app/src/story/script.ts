@@ -10,7 +10,7 @@ const vo = (f: string, text: string): Line => ({ audio: `audio/vo/${f}.mp3`, tex
 export const LINES = {
   intro: vo('n01-intro', "Sit back. It's late, and the house is quiet. Now, hold out one hand, palm open."),
   lantern: vo('n02-lantern', "There. That's a lantern now. Keep it low and easy, the way you'd hold a cup of tea."),
-  table: vo('n03-table', "Someone's asleep on your table. His name is Wick. Shine your light on him."),
+  table: vo('n03-table', "Someone's asleep on your table. His name is Wick. Shine your light on him, or knock twice on the table."),
   wake: vo('n04-wake', "He's awake. He's been walking for a very long time, and tonight he wants to see the sun come up. Your window is the edge of his world."),
   couch: vo('n05-couch', "He can only walk where there's light. Point your lantern at the couch."),
   ridge: vo('n06-ridge', "Up the ridge he goes. From up here he can see the whole country. It's a long way down."),
@@ -33,6 +33,7 @@ export const SFX = {
   dawn: 'audio/sfx/dawn.mp3',
   yawn: 'audio/sfx/yawn.mp3',
   hop: 'audio/sfx/hop.mp3',
+  knock: 'audio/sfx/knock.mp3',
 } as const;
 
 export const MUSIC = 'audio/music/night.mp3';
@@ -45,6 +46,7 @@ export const ART = {
   boat: 'art/boat.png',
   gate: 'art/gate.png',
   sun: 'art/sun.png',
+  handHint: 'art/hand-hint.png',
 } as const;
 
 /** The line that asks for a beat. Generic when the room had no matching label. */

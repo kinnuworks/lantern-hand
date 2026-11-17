@@ -107,13 +107,14 @@ for (const [i, fwd] of ([[0, 0, -1], [1, 0, 0], [0, 0, 1], [-0.7, 0, -0.7]] as V
 
 const rows: string[] = [];
 let k = 0, n = 0, bk = 0;
+const angles: number[] = [];
 for (const c of cases) {
   const head = headFor(c.planes);
   FWD = forwardFor(c);
   const { spots } = stage(c.planes, head, forwardFor(c));
   const fails = check(c.planes, spots, head);
   const bfails = check(c.planes, baseline(c.planes, head), head);
-  if (c.test) { n++; if (fails.length === 0) k++; if (bfails.length === 0) bk++; }
+  if (c.test) { n++; if (fails.length === 0) k++; if (bfails.length === 0) bk++; for (const s of spots) angles.push(offAxis(s.pos, head, FWD)); }
   const used = spots.map((s) => `${s.beat}:${s.label}${s.fallback ? '*' : ''}`).join(' ');
   rows.push(`| ${c.name} | ${c.test ? 'test' : 'tuning'} | ${fails.length === 0 ? 'pass' : 'FAIL'} | ${used} | ${fails.join('; ') || '-'} | ${bfails.length === 0 ? 'pass' : `fail (${bfails.length})`} |`);
 }
@@ -131,5 +132,7 @@ const report = [
 ].join('\n');
 writeFileSync(join(import.meta.dirname, 'staging-results.md'), report);
 console.log(report.split('\n').slice(0, 3).join('\n'));
-console.log(JSON.stringify({ k, n, baseline_k: bk }));
+angles.sort((a, b) => a - b);
+const within35 = angles.filter((a) => a <= 35).length;
+console.log(JSON.stringify({ k, n, baseline_k: bk, beats: angles.length, within_35deg: within35, median_deg: Math.round(angles[Math.floor(angles.length / 2)]), max_deg: Math.round(angles[angles.length - 1]) }));
 process.exit(k === n ? 0 : 1);

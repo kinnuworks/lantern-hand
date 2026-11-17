@@ -10,6 +10,7 @@ import argparse, json, math, pathlib, subprocess, sys, time
 ap = argparse.ArgumentParser()
 ap.add_argument("--shots", default="")
 ap.add_argument("--timeout", type=float, default=420)
+ap.add_argument("--knock", action="store_true", help="wake him by knocking twice on the table instead of lighting him")
 ap.add_argument("--gaze", action="store_true", help="no hands at all: light every beat by looking at it (accessibility path)")
 args = ap.parse_args()
 APP = pathlib.Path(__file__).resolve().parent.parent
@@ -90,6 +91,19 @@ print(f"lantern lit {time.time() - t_enter:.0f} s after the room was staged (han
 shot("02-lantern")
 
 lit = []
+if args.knock:
+    tb = spots[0]["pos"]
+    call("set-hand-pose", {"device": "hand-right", "poseId": "fist"})  # a knock is a closed hand: no lantern light
+    t = time.time()
+    while time.time() - t < 40 and not logs("^KNOCK"):
+        for _ in range(2):
+            call("set-transform", {"device": "hand-right", "anchor": "index-tip", "position": {"x": tb[0] + 0.1, "y": tb[1] + 0.08, "z": tb[2] + 0.05}, "orientation": {"fingers": [0, -0.3, -0.95], "palm": "down"}})
+            time.sleep(0.25)
+            call("set-transform", {"device": "hand-right", "anchor": "index-tip", "position": {"x": tb[0] + 0.1, "y": tb[1] + 0.005, "z": tb[2] + 0.05}, "orientation": {"fingers": [0, -0.3, -0.95], "palm": "down"}})
+            time.sleep(0.25)
+    if not logs("^KNOCK"): fail("two knocks on the table did not wake him")
+    print("KNOCK PASS: two knuckle knocks on the real table woke him")
+    call("set-hand-pose", {"device": "hand-right", "poseId": "open"})
 for s in spots:
     t = time.time()
     while time.time() - t < 60:

@@ -70,7 +70,7 @@ function nearest(planes: Plane[], head: Vec3): Plane | undefined {
   return planes
     .map((p) => ({ p, pt: viewPoint(p, head) }))
     .filter(({ p, pt }) => flat(p.center, head) <= MAX_REACH + 1 && offAxis(pt, head) <= MAX_ANGLE)
-    .sort((a, b) => flat(a.pt, head) + offAxis(a.pt, head) / 90 - (flat(b.pt, head) + offAxis(b.pt, head) / 90))[0]?.p;
+    .sort((a, b) => flat(a.pt, head) + offAxis(a.pt, head) / 25 - (flat(b.pt, head) + offAxis(b.pt, head) / 25))[0]?.p;
 }
 
 /** A point on a horizontal surface, as close as possible to `want`, that the seated viewer can see. */
@@ -216,7 +216,7 @@ export function stage(planes: Plane[], head: Vec3, forward: Vec3 = [0, 0, -1]): 
       }
     }
     const free = candidates.filter((c) => !blockers.some((b) => under(b, c)) && flat(c, head) > 0.6 && offAxis(c, head) < 60 && !occluded(planes, head, [c[0], c[1] + 0.1, c[2]], floorY));
-    const pick = free.sort((a, b) => flat(a, from) - flat(b, from))[0];
+    const pick = free.sort((a, b) => flat(a, from) + offAxis(a, head) / 25 - (flat(b, from) + offAxis(b, head) / 25))[0];
     if (pick) push('sea', floorPlane, pick, false);
     else push('sea', floorPlane, clampToPlane(floorPlane, [from[0], floorY, from[2]]), true);
   }
