@@ -20,7 +20,7 @@ const sub = (a: Vec3, b: Vec3): Vec3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const dist = (a: Vec3, b: Vec3) => Math.hypot(...sub(a, b));
 
-type Case = { name: string; base: string; planes: Plane[]; test: boolean };
+type Case = { name: string; base: string; planes: Plane[]; test: boolean; head?: Vec3; fwd?: Vec3 };
 
 function degrade(name: string, planes: Plane[]): Case[] {
   return [
@@ -112,13 +112,31 @@ for (const [i, fwd] of ([[0, 0, -1], [1, 0, 0], [0, 0, 1], [-0.7, 0, -0.7]] as V
   cases.push({ name: `standin/facing-${i}`, base: 'standin', test: true, planes: standinRoom([0.3, 1.2, -0.2], fwd) });
 }
 
+// Added after our bug check on 56eabb6: other seats and facings, not only the emulator origin facing -z.
+// Seats: four points 1 m from the origin (kept on open floor, not under furniture), each facing four ways.
+const FACINGS: Vec3[] = [[0, 0, -1], [1, 0, 0], [0, 0, 1], [-1, 0, 0]];
+for (const f of readdirSync(dir).filter((f) => f.endsWith('.json')).sort()) {
+  const room = JSON.parse(readFileSync(join(dir, f), 'utf8'));
+  const planes: Plane[] = room.planes;
+  const floor = planes.find((p) => p.label === 'floor');
+  const fy = floor ? floor.center[1] : 0;
+  const raised = planes.filter((p) => isUp(p) && p.center[1] > fy + 0.1);
+  for (const [sx, sz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const head: Vec3 = [sx, fy + 1.2, sz];
+    if (raised.some((b) => under(b, [sx, fy + 0.05, sz]))) continue; // a seat inside furniture isn't a seat
+    FACINGS.forEach((fw, i) => {
+      cases.push({ name: `${room.room}/seat(${sx},${sz})/facing-${i}`, base: room.room, test: true, planes, head, fwd: fw });
+    });
+  }
+}
+
 const rows: string[] = [];
 let k = 0, n = 0, bk = 0;
 const angles: number[] = [];
 for (const c of cases) {
-  const head = headFor(c.planes);
-  FWD = forwardFor(c);
-  const staged = stage(c.planes, head, forwardFor(c));
+  const head = c.head ?? headFor(c.planes);
+  FWD = c.fwd ?? forwardFor(c);
+  const staged = stage(c.planes, head, FWD);
   const spots = staged.spots;
   const fails = check(staged.planes, spots, head);
   const bfails = check(c.planes, baseline(c.planes, head), head);

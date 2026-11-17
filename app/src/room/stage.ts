@@ -1,5 +1,5 @@
 import type { BeatId, Plane, Spot, Vec3 } from './types.js';
-import { completeRoom } from './standin.js';
+import { completeRoom, roomDepth, standinRoom } from './standin.js';
 
 /**
  * Picks where each story beat happens in a real room, from the labelled planes the
@@ -130,7 +130,40 @@ export interface StageResult {
 export function stage(scan: Plane[], head: Vec3, forward: Vec3 = [0, 0, -1]): StageResult {
   const fl = Math.hypot(forward[0], forward[2]);
   FORWARD = fl > 0.2 ? [forward[0] / fl, 0, forward[2] / fl] : [0, 0, -1]; // looking straight up or down: assume ahead
-  const planes = completeRoom(scan, head, FORWARD);
+  const first = stageOnce(completeRoom(scan, head, FORWARD), head);
+  const bad = badBeats(first, head);
+  if (!bad.length) return first;
+  // Some beat has nowhere good to go from this seat: add the stand-in pieces it needs in front
+  // of the viewer (drawn as paper) and stage again.
+  const want: string[] = [];
+  if (bad.includes('table') || bad.includes('ridge')) want.push('s-table', 's-couch');
+  if (bad.includes('sea')) want.push('s-floor');
+  if (bad.includes('gate') || bad.includes('window')) want.push('s-wall', 's-door', 's-window');
+  const extra = standinRoom(head, FORWARD, roomDepth(scan, head, FORWARD))
+    .filter((p) => want.includes(p.id))
+    .map((p): Plane => ({
+      ...p,
+      id: p.id + '-x',
+      center: [p.center[0], p.id === 's-floor' ? first.floorY : p.center[1] + (first.floorY - (head[1] - 1.15)), p.center[2]],
+      ...(p.id === 's-floor' ? { halfX: 1.2, halfZ: 1.2 } : {}),
+    }));
+  const second = stageOnce([...first.planes.filter((p) => !p.id.startsWith('s-floor') || !want.includes('s-floor')), ...extra], head);
+  return badBeats(second, head).length < bad.length ? second : first;
+}
+
+/** Beats that are missing or that a seated viewer couldn't comfortably see. */
+export function badBeats(r: StageResult, head: Vec3): BeatId[] {
+  const out: BeatId[] = [];
+  for (const b of ['table', 'ridge', 'sea', 'gate', 'window'] as BeatId[]) {
+    const s = r.spots.find((x) => x.beat === b);
+    if (!s) { out.push(b); continue; }
+    const dist = Math.hypot(s.pos[0] - head[0], s.pos[1] - head[1], s.pos[2] - head[2]);
+    if (dist > 5 || offAxis(s.pos, head) > 75 || occluded(r.planes, head, [s.pos[0], s.pos[1] + 0.12, s.pos[2]], r.floorY, s.planeId)) out.push(b);
+  }
+  return out;
+}
+
+function stageOnce(planes: Plane[], head: Vec3): StageResult {
   const floors = planes.filter((p) => p.label === 'floor' && isUp(p));
   const floorPlane =
     floors.sort((a, b) => area(b) - area(a))[0] ??
@@ -203,27 +236,35 @@ export function stage(scan: Plane[], head: Vec3, forward: Vec3 = [0, 0, -1]): St
     const blockers = planes.filter((p) => isUp(p) && p.center[1] > floorY + 0.1);
     for (const step of [0.9, 0.7, 0.5, 1.1, 1.3]) {
       const c = clampToPlane(floorPlane, [t[0] + (dir[0] / len) * step, floorY, t[2] + (dir[2] / len) * step]);
-      if (!blockers.some((b) => under(b, c)) && flat(c, t) > 0.3) {
+      if (!blockers.some((b) => under(b, c)) && flat(c, t) > 0.3 && flat(c, head) <= MAX_REACH && offAxis(c, head) <= MAX_ANGLE) {
         push('ridge', floorPlane, c, true);
         break;
       }
     }
   }
 
-  // 3. sea: open floor that is not under furniture, between the ridge and the far wall.
+  // 3. sea: open floor that is not under furniture, in view, between the ridge and the far wall.
+  // Try every floor surface (the real one first, then any stand-in floor) until one has a clear spot.
+  const floorsByArea = planes.filter((p) => p.label === 'floor' && isUp(p)).sort((a, b) => (b.id.startsWith('s-') ? -1 : 0) - (a.id.startsWith('s-') ? -1 : 0) || area(b) - area(a));
   if (floorPlane) {
     const from = spots[spots.length - 1]?.pos ?? head;
     const blockers = planes.filter((p) => isUp(p) && p.center[1] > floorY + 0.1);
-    const candidates: Vec3[] = [];
-    for (let r = 0.5; r <= 2.5; r += 0.25) {
-      for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
-        candidates.push(clampToPlane(floorPlane, [from[0] + Math.cos(a) * r, floorY, from[2] + Math.sin(a) * r]));
+    let placed = false;
+    for (const fp of floorsByArea.length ? floorsByArea : [floorPlane]) {
+      const candidates: Vec3[] = [];
+      // Around where he last stood first, then around the open floor just ahead of the viewer.
+      for (const c0 of [from, ahead(head, 1.0)]) {
+        for (let r = c0 === from ? 0.5 : 0; r <= 2.5; r += 0.25) {
+          for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+            candidates.push(clampToPlane(fp, [c0[0] + Math.cos(a) * r, floorY, c0[2] + Math.sin(a) * r]));
+          }
+        }
       }
+      const free = candidates.filter((c) => !blockers.some((b) => under(b, c)) && flat(c, head) > 0.45 && flat(c, head) <= MAX_REACH && offAxis(c, head) < 60 && !occluded(planes, head, [c[0], c[1] + 0.12, c[2]], floorY));
+      const pick = free.sort((a, b) => flat(a, from) + offAxis(a, head) / 25 - (flat(b, from) + offAxis(b, head) / 25))[0];
+      if (pick) { push('sea', fp, pick, fp !== floorPlane); placed = true; break; }
     }
-    const free = candidates.filter((c) => !blockers.some((b) => under(b, c)) && flat(c, head) > 0.6 && offAxis(c, head) < 60 && !occluded(planes, head, [c[0], c[1] + 0.1, c[2]], floorY));
-    const pick = free.sort((a, b) => flat(a, from) + offAxis(a, head) / 25 - (flat(b, from) + offAxis(b, head) / 25))[0];
-    if (pick) push('sea', floorPlane, pick, false);
-    else push('sea', floorPlane, clampToPlane(floorPlane, [from[0], floorY, from[2]]), true);
+    if (!placed) push('sea', floorPlane, clampToPlane(floorPlane, [from[0], floorY, from[2]]), true);
   }
 
   // 4. gate: a door, else wall art, else the nearest wall in view. The gate stands at floor level against it.
@@ -245,6 +286,12 @@ export function stage(scan: Plane[], head: Vec3, forward: Vec3 = [0, 0, -1]): St
     if (placed) break;
   }
 
+  // Double-check the gate from the seat exactly as a viewer sees it; if it is hidden, drop it and use the floor.
+  const gi = spots.findIndex((x) => x.beat === 'gate');
+  if (gi >= 0) {
+    const g = spots[gi];
+    if (occluded(planes, head, [g.pos[0], g.pos[1] + 0.12, g.pos[2]], floorY, g.planeId)) spots.splice(gi, 1);
+  }
   if (!spots.some((x) => x.beat === 'gate') && floorPlane) {
     // No clear wall in view: the paper gate stands on open floor, past the sea.
     const from = prevPos();

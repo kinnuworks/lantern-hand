@@ -36,10 +36,10 @@ A chapter takes about six minutes. Wick stays where you left him: come back and 
 
 Evidence, stated plainly: no real users yet; it was built for this hackathon. Instead: our own break test of the room staging, including room scans it was never tuned on. It reruns from the repo with one command.
 
-> Claim: Lantern Hand stages a full chapter in 49 of 49 test rooms: 6 emulator room scans it was never tuned on, stripped-down and partial copies of all 8 scans, and the stand-in room facing four ways.
+> Claim: Lantern Hand stages a full chapter in 161 of 161 test rooms: 8 emulator room scans with the viewer at five seats facing four ways, stripped-down and partial copies of every scan, and the stand-in room.
 > Evidence type: Our own break test (we tried to make it fail), not real users.
-> Data: the eight room scans in Meta's Immersive Web Emulator plus stripped-down and partial copies and the stand-in room, 49 cases. Baseline: our own naive fixed-offset staging, 0 of 49.
-> Result: 49 of 49 (95% interval 92.7% to 100%). 209 of 245 placed beats sit within 35 degrees of straight ahead.
+> Data: the eight room scans in Meta's Immersive Web Emulator plus other seats and facings, stripped-down and partial copies, and the stand-in room: 161 cases (6 of the 8 scans were never used for tuning). Baseline: our own naive fixed-offset staging, 0 of 161.
+> Result: 161 of 161 (95% interval 97.7% to 100%). 614 of 805 placed beats sit within 35 degrees of straight ahead.
 > Rerun: `npx -y tsx evidence/eval_staging.ts` (results in [`evidence/staging-results.md`](evidence/staging-results.md)). Limits: emulated scans, not real headsets; the degraded copies come from the same rooms; no frame-rate or comfort measure on a device.
 
 Earlier runs failed (18 of 30 on the first run); what broke and what we fixed is listed in [`evidence/EVAL_PLAN.md`](evidence/EVAL_PLAN.md).
