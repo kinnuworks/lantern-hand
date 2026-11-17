@@ -17,7 +17,7 @@ npx -y tsx evidence/eval_staging.ts
 # Core loops 2-5 (lantern, light, traveller, chapter): hands-only walkthrough in the emulator.
 # Needs the managed dev session (npx iwsdk dev up --ai-mode agent, IWSDK_DEV_RENDER_MODE=continuous).
 if ( cd app && npx iwsdk dev status 2>/dev/null | grep -q '"browserCommandReady": true' ); then
-  ( cd app && python3 tests/walkthrough.py && python3 tests/walkthrough.py --gaze )
+  ( cd app && python3 tests/walkthrough.py --knock && python3 tests/walkthrough.py --gaze )
 else
   echo "check.sh: FAIL: the emulator dev session is not running, so the hands-only walkthrough could not run"
   echo "  start it with: (cd app && IWSDK_DEV_RENDER_MODE=continuous npx iwsdk dev up --ai-mode agent)"

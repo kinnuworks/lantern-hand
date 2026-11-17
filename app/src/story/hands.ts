@@ -78,11 +78,12 @@ export class Hands {
       this.b.copy(this.pos['pinky-finger-metacarpal']).sub(w);
       st.up.crossVectors(this.a, this.b).normalize();
       if (src.handedness === 'left') st.up.negate();
-      // Open palm: every fingertip well away from the palm centre.
+      // Open (or relaxed) hand: fingertips far from the wrist. Measured in the emulator:
+      // open 0.178 m, relaxed 0.177 m, fist 0.068 m on average, so 0.13 m splits them cleanly.
       const tips = ['index-finger-tip', 'middle-finger-tip', 'ring-finger-tip', 'pinky-finger-tip'];
-      let spread = 0;
-      for (const tip of tips) spread += this.pos[tip].distanceTo(st.palm);
-      st.open = spread / tips.length > 0.07;
+      let reach = 0;
+      for (const tip of tips) reach += this.pos[tip].distanceTo(w);
+      st.open = reach / tips.length > 0.13;
     }
   }
 
