@@ -24,6 +24,10 @@ else
   exit 1
 fi
 
+# The live link judges open must serve the app (pushes to GitHub must never replace it).
+live=$(curl -s https://lantern-hand.vercel.app/ | grep -o "<title>Lantern Hand" || true)
+[ -n "$live" ] || { echo "check.sh: FAIL: https://lantern-hand.vercel.app does not serve the app"; exit 1; }
+
 # Evidence labels: once evidence/EVAL_PLAN.md exists, the public text (README, submission text,
 # video script) must label every evidence claim for its kind.
 if [ -f evidence/EVAL_PLAN.md ] && [ -f evidence_lint.py ]; then
