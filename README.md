@@ -1,5 +1,7 @@
 # Lantern Hand
 
+![Lantern Hand: your hand lights his way. Emulator footage of Wick on a windowsill at sunrise, next to the cut-paper title art](docs/thumbnail.png)
+
 Hold out your open hand and it becomes a paper lantern. A small paper traveller called Wick wakes on your real table and crosses your room toward your window (or, if it's behind you, the wall in front of you), walking only where you shine the light.
 
 It needs a Meta Quest because the whole story is staged on your own furniture: the headset's scene understanding tells it where your table, couch, floor, door and window are, and hand tracking turns your palm into the light he follows. Every room gives a different journey, because the route is built from your room's own surfaces.
