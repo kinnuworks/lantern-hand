@@ -1,14 +1,11 @@
 import {
-  AdditiveBlending,
   BackSide,
-  CircleGeometry,
   Color,
   createSystem,
   Group,
   Mesh,
   MeshBasicMaterial,
   PlaneGeometry,
-  RingGeometry,
   SphereGeometry,
   Vector3,
 } from '@iwsdk/core';
@@ -18,6 +15,7 @@ import { raycastPlanes } from '../room/raycast.js';
 import { stage } from '../room/stage.js';
 import type { BeatId, Plane, Spot, Vec3 } from '../room/types.js';
 import { Caption } from './caption.js';
+import { haloMat, markerMat, poolMat } from './glow.js';
 import { Hands } from './hands.js';
 import { makeCutout, setCutoutImage } from './cutout.js';
 import { ART, askLine, C2, LINES, MUSIC, ORDER, SFX } from './script.js';
@@ -54,6 +52,7 @@ export class StorySystem extends createSystem({}) {
   private traveller!: Mesh;
   private lantern!: Mesh;
   private pool!: Mesh;
+  private halo!: Mesh;
   private glow!: Mesh;
   private night!: Mesh;
   private boat: Mesh | null = null;
@@ -89,18 +88,23 @@ export class StorySystem extends createSystem({}) {
     // The night: a soft dark veil over passthrough that lifts at dawn.
     this.night = new Mesh(
       new SphereGeometry(8, 32, 16),
-      new MeshBasicMaterial({ color: new Color('#0b0a1c'), transparent: true, opacity: 0, side: BackSide, depthWrite: false }),
+      new MeshBasicMaterial({ color: new Color('#14102e'), transparent: true, opacity: 0, side: BackSide, depthWrite: false }),
     );
     this.night.renderOrder = -1;
     this.root.add(this.night);
 
     // Light pool where the lantern's beam lands, and the glow that marks where to aim.
-    this.pool = new Mesh(new CircleGeometry(0.16, 40), glowMat('#ffcf7a', 0.55));
+    this.pool = new Mesh(new PlaneGeometry(0.42, 0.42), poolMat());
     this.pool.visible = false;
     this.root.add(this.pool);
-    this.glow = new Mesh(new RingGeometry(0.09, 0.13, 48), glowMat('#fff2c4', 0.85));
+    this.glow = new Mesh(new PlaneGeometry(0.34, 0.34), markerMat());
     this.glow.visible = false;
     this.root.add(this.glow);
+    // Warm light in the open palm, behind the lantern, so it reads as held and lit.
+    this.halo = new Mesh(new PlaneGeometry(0.26, 0.26), haloMat());
+    this.halo.visible = false;
+    this.halo.renderOrder = 1;
+    this.root.add(this.halo);
 
     void makeCutout(ART.handHint, 0.12).then((h) => {
       this.handHint = h;
@@ -395,6 +399,11 @@ export class StorySystem extends createSystem({}) {
       this.lantern.visible = true;
       this.lantern.position.copy(hand.palm).addScaledVector(hand.up, 0.05);
       this.faceViewer(this.lantern);
+      this.halo.visible = true;
+      this.halo.position.copy(hand.palm).addScaledVector(hand.up, 0.035);
+      this.faceViewer(this.halo);
+      this.halo.scale.setScalar(1 + Math.sin(performance.now() / 420) * 0.05);
+      this.lantern.renderOrder = 2;
       if (!this.lanternLit) {
         this.lanternLit = true;
         console.log('LANTERN_LIT');
@@ -404,6 +413,7 @@ export class StorySystem extends createSystem({}) {
       this.noHandFor = 0;
     } else {
       this.lantern.visible = false;
+      this.halo.visible = false;
       this.noHandFor += dt;
       // No hands at all (or hands the tracker can't see): carry on with looking instead of pointing.
       if (!this.lanternLit && this.noHandFor > GAZE_AFTER + 3 && this.onLanternLit) {
@@ -547,16 +557,6 @@ export class StorySystem extends createSystem({}) {
 const DAWN = new Color('#ffb27a');
 const DEBUG = new URLSearchParams(location.search).has('debug') || location.hostname === 'localhost';
 const r2 = (n: number) => Math.round(n * 100) / 100;
-
-function glowMat(color: string, opacity: number) {
-  return new MeshBasicMaterial({
-    color: new Color(color),
-    transparent: true,
-    opacity,
-    blending: AdditiveBlending,
-    depthWrite: false,
-  });
-}
 
 function dist3(a: Vec3, b: Vec3) {
   return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);

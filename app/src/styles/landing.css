@@ -1,0 +1,79 @@
+/* Landing page: the cover of a cut-paper picture book. Built on the Yuna reading app's system: cream page, soft serif title, a felt night band with a torn top edge. */
+
+/* ---------- shared structure ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: var(--fs-body); line-height: var(--lh-body); -webkit-font-smoothing: antialiased; }
+#landing { position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden; background: var(--paper); scroll-behavior: smooth; }
+#landing[hidden] { display: none; }
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+h1, h2 { margin: 0; font-weight: var(--weight-display); }
+
+.nav { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; max-width: var(--page-max); margin: 0 auto; padding: 0 var(--gutter); height: var(--nav-h); font-family: var(--font-ui); }
+.nav__logo { text-decoration: none; }
+.nav__links { display: flex; gap: 32px; }
+.nav__links a { text-decoration: none; font-size: var(--fs-nav); }
+.nav__links a:hover { text-decoration: underline; }
+
+.hero { position: relative; text-align: center; }
+.hero__copy { position: relative; z-index: 2; max-width: 760px; margin: 0 auto; padding: 0 var(--gutter); }
+.hero__title { font-family: var(--font-display); font-size: var(--fs-display); line-height: var(--lh-display); letter-spacing: var(--track-display); color: var(--ink); }
+.hero__deck { font-size: var(--fs-lead); line-height: 1.45; color: var(--ink-2); max-width: 600px; margin: 18px auto 0; }
+.hero__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 16px; margin-top: 28px; }
+#enter { font-family: var(--font-ui); font-size: var(--fs-btn); min-height: var(--h-control); padding: 0 var(--pad-control); border: var(--btn-border); border-radius: var(--btn-radius); background: var(--btn-bg); color: var(--btn-fg); box-shadow: var(--shadow-btn); cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+#enter:not(:disabled):hover { transform: translateY(-1px); }
+#enter:not(:disabled):active { transform: translateY(1px); box-shadow: none; }
+#enter:disabled { opacity: .7; cursor: default; box-shadow: none; }
+#enter:focus-visible, #restart:focus-visible, .nav a:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+#restart { font: inherit; font-family: var(--font-ui); font-size: 16px; background: none; border: 0; padding: 12px 4px; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+#restart[hidden] { display: none; }
+#status { margin-top: 14px; font-family: var(--font-ui); font-size: 16px; color: var(--ink-3); }
+
+.art { display: none; position: relative; }
+
+.how, .see { max-width: var(--page-max); margin: 0 auto; padding: var(--gap-section) var(--gutter); text-align: center; }
+.how h2, .see h2 { font-family: var(--font-display); font-size: var(--fs-h2); line-height: 1.2; color: var(--ink); }
+.steps { list-style: none; margin: 48px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; }
+.step { display: flex; flex-direction: column-reverse; align-items: center; justify-content: flex-end; gap: 24px; padding: 35px; }
+.step span { font-family: var(--font-display); font-size: var(--fs-h3); line-height: 1.3; color: var(--ink); }
+.step img { width: 150px; height: 150px; object-fit: contain; }
+.stills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 48px; }
+.stills figure { margin: 0; }
+.stills img { width: 100%; aspect-ratio: 5 / 4; object-fit: cover; object-position: 50% 100%; border-radius: var(--r-card); }
+.stills figcaption { margin-top: 14px; font-size: 17px; line-height: 1.45; color: var(--ink-2); }
+.see__note { margin: 32px auto 0; max-width: 640px; font-size: 16px; color: var(--ink-3); }
+
+@media (max-width: 760px) {
+  .nav__links { display: none; }
+  .steps, .stills { grid-template-columns: 1fr; }
+}
+
+/* ---------- tokens and the night band ---------- */
+:root {
+  --paper: #fff6f0; --ink: #3d2d79; --ink-2: #3d2d79; --ink-3: #5d6b79;
+  --font-display: "Young Serif", Georgia, serif; --font-body: "Nunito", system-ui, sans-serif; --font-ui: "Nunito", system-ui, sans-serif;
+  --weight-display: 400; --lh-display: 1.2; --track-display: 0;
+  --fs-display: clamp(40px, calc(40px + 20 * ((100vw - 375px) / 1065)), 60px);
+  --fs-h2: clamp(32px, calc(32px + 18 * ((100vw - 375px) / 1065)), 50px);
+  --fs-h3: 26px; --fs-lead: 20px; --fs-body: 18px; --lh-body: 1.5; --fs-nav: 16px; --fs-btn: 20px;
+  --btn-bg: #3d2d79; --btn-fg: #ffffff; --btn-border: 1px solid #3d2d79; --btn-radius: 8px; --h-control: 58px; --pad-control: 36px; --shadow-btn: none;
+  --focus: #3056d1; --r-card: 32px;
+  --page-max: 1216px; --gutter: 24px; --nav-h: 103px; --gap-section: clamp(64px, 9vw, 117px);
+}
+.art-a { display: block; }
+.nav__logo { font-family: var(--font-display); font-size: 20px; }
+.hero { padding-top: 68px; }
+.art-a { margin-top: calc(-0.253 * max(100vw, 900px) + 24px); z-index: 1; pointer-events: none; }
+.art-a__hills { width: 100%; min-width: 900px; margin-left: 50%; transform: translateX(-50%); }
+.art-a__wick { position: absolute; left: 50%; bottom: 16%; width: clamp(80px, 9vw, 130px); transform: translateX(-40%); filter: drop-shadow(0 8px 14px rgb(20 12 50 / .45)); }
+.art-a__lamp { position: absolute; left: 50%; bottom: 31%; width: clamp(64px, 6.5vw, 96px); transform: translateX(90%); filter: drop-shadow(0 0 28px rgb(255 190 90 / .85)) drop-shadow(0 0 70px rgb(255 170 60 / .5)); animation: lamp-bob 4.5s ease-in-out infinite; }
+@keyframes lamp-bob { 50% { transform: translate(90%, -8px); } }
+.art-a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 4px; background: #3a2f6e; }
+.step { border-radius: 45px; }
+.s1 { background: #ffefb8; }
+.s2 { background: #cde6f3; }
+.s3 { background: #e0dcf0; }
+.steps .step span { color: #3d2d79; }
+
+@media (prefers-reduced-motion: reduce) { .art-a__lamp { animation: none; } }

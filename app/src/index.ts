@@ -14,12 +14,14 @@ try {
   const saved = JSON.parse(localStorage.getItem(SAVE_KEY) ?? 'null') as { chapter?: number } | null;
   if (saved && (saved.chapter ?? 0) >= 1) {
     restart.hidden = false;
+    restart.textContent = 'Start again from chapter one';
     enter.textContent = `Enter: chapter ${Math.min((saved.chapter ?? 0) + 1, 2)}`;
   }
 } catch { /* no storage: always chapter one */ }
 restart.addEventListener('click', () => {
   try { localStorage.removeItem(SAVE_KEY); } catch { /* nothing saved */ }
   restart.hidden = true;
+  restart.textContent = '';
   enter.textContent = 'Enter';
   console.log('PROGRESS_CLEARED');
 });
@@ -32,7 +34,9 @@ World.create(
   world.registerSystem(StorySystem);
 
   const xr = navigator.xr;
-  const ok = xr ? await xr.isSessionSupported('immersive-ar').catch(() => false) : false;
+  // ?state=ready shows the page as a headset sees it, for screenshots taken on a desktop.
+  const ok = new URLSearchParams(location.search).get('state') === 'ready'
+    || (xr ? await xr.isSessionSupported('immersive-ar').catch(() => false) : false);
   if (ok) {
     enter.disabled = false;
     status.textContent = 'Best on Meta Quest 3 or 3S with your room set up.';
