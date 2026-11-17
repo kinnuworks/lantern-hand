@@ -7,7 +7,7 @@
  */
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { stage, under, isUp } from '../app/src/room/stage.ts';
+import { stage, under, isUp, offAxis, occluded } from '../app/src/room/stage.ts';
 import type { Plane, Spot, Vec3 } from '../app/src/room/types.ts';
 
 const SEED = 20261118;
@@ -58,6 +58,9 @@ function check(planes: Plane[], spots: Spot[], head: Vec3): string[] {
       if (q.id !== s.planeId && isUp(q) && under(q, s.pos)) fails.push(`${beat}: hidden under ${q.label} ${q.id}`);
     }
     if (dist(s.pos, head) > 5) fails.push(`${beat}: ${dist(s.pos, head).toFixed(1)} m from the viewer`);
+    const fy = Math.min(...planes.filter((q) => q.label === 'floor').map((q) => q.center[1]), head[1] - 1.2);
+    if (occluded(planes, head, [s.pos[0], s.pos[1] + 0.12, s.pos[2]], fy, s.planeId)) fails.push(`${beat}: hidden behind furniture from the viewer's seat`);
+    if (offAxis(s.pos, head) > 75) fails.push(`${beat}: ${offAxis(s.pos, head).toFixed(0)} deg off the viewer's forward view`);
   }
   for (let i = 1; i < spots.length; i++) {
     if (dist(spots[i].pos, spots[i - 1].pos) < 0.2) fails.push(`${spots[i].beat}: on top of ${spots[i - 1].beat}`);

@@ -11,10 +11,23 @@ cd "$(dirname "$0")"
 # Typecheck and production build of the WebXR app.
 ( cd app && npm run typecheck && npm run build >/dev/null )
 
+# Core loop 1 (read the room): the break test over every captured emulator room and degraded copy.
+npx -y tsx evidence/eval_staging.ts
+
+# Core loops 2-5 (lantern, light, traveller, chapter): hands-only walkthrough in the emulator.
+# Needs the managed dev session (npx iwsdk dev up --ai-mode agent, IWSDK_DEV_RENDER_MODE=continuous).
+if ( cd app && npx iwsdk dev status 2>/dev/null | grep -q '"browserCommandReady": true' ); then
+  ( cd app && python3 tests/walkthrough.py )
+else
+  echo "check.sh: FAIL: the emulator dev session is not running, so the hands-only walkthrough could not run"
+  echo "  start it with: (cd app && IWSDK_DEV_RENDER_MODE=continuous npx iwsdk dev up --ai-mode agent)"
+  exit 1
+fi
+
 # Evidence labels: once evidence/EVAL_PLAN.md exists, the public text (README, submission text,
 # video script) must label every evidence claim for its kind.
 if [ -f evidence/EVAL_PLAN.md ] && [ -f evidence_lint.py ]; then
   python3 -I evidence_lint.py
 fi
 
-echo "check.sh: typecheck and build pass; core-loop checks are added as each step is built"
+echo "check.sh: all checks pass"
