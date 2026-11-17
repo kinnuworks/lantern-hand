@@ -131,8 +131,13 @@ export class StorySystem extends createSystem({}) {
     this.planes = planes;
     this.camera.getWorldPosition(this.head);
     this.camera.getWorldDirection(this.tmpD);
-    const { spots } = stage(planes, [this.head.x, this.head.y, this.head.z], [this.tmpD.x, 0, this.tmpD.z]);
-    if (standin) this.drawStandin(planes);
+    const staged = stage(planes, [this.head.x, this.head.y, this.head.z], [this.tmpD.x, 0, this.tmpD.z]);
+    const spots = staged.spots;
+    // Partial scans are completed with stand-in pieces; draw those as paper so Wick never stands on air.
+    this.planes = staged.planes;
+    const added = staged.planes.filter((p) => p.id.startsWith('s-'));
+    if (standin || added.length) this.drawStandin(added);
+    if (added.length && !standin) console.log('ROOM_COMPLETED ' + added.map((p) => p.label).join(','));
     for (const s of spots) this.spots.set(s.beat, s);
     (window as unknown as { __spots: Spot[] }).__spots = spots;
     console.log('STAGED ' + JSON.stringify(spots.map((s) => ({ beat: s.beat, label: s.label, fallback: s.fallback, pos: s.pos }))));
@@ -145,7 +150,8 @@ export class StorySystem extends createSystem({}) {
 
   private async run(start: BeatId | 'end' | 'ch2' | null) {
     const saved = readSave();
-    const table = this.spots.get('table')!;
+    const table = this.spots.get('table');
+    if (!table) { console.error('STAGING_FAILED no table spot'); this.caption.show('Something went wrong reading your room. Please exit and enter again.'); return; }
     if (start === 'ch2' || (!start && saved.chapter >= 1)) {
       await this.chapterTwo(saved.chapter >= 2);
       return;
@@ -434,7 +440,7 @@ export class StorySystem extends createSystem({}) {
         }
         const now = performance.now() / 1000;
         if (down && this.tipWasUp) {
-          this.knocks = this.knocks.filter((k) => now - k < 1.5);
+          this.knocks = this.knocks.filter((k) => now - k < 2.5);
           this.knocks.push(now);
           if (this.knocks.length >= 2) {
             this.knocks = [];

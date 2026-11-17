@@ -1,4 +1,5 @@
 import type { BeatId, Plane, Spot, Vec3 } from './types.js';
+import { completeRoom } from './standin.js';
 
 /**
  * Picks where each story beat happens in a real room, from the labelled planes the
@@ -122,14 +123,18 @@ function area(p: Plane) {
 export interface StageResult {
   spots: Spot[];
   floorY: number;
+  /** The planes the spots refer to: the scan plus any stand-in pieces it was missing. */
+  planes: Plane[];
 }
 
-export function stage(planes: Plane[], head: Vec3, forward: Vec3 = [0, 0, -1]): StageResult {
-  FORWARD = forward;
+export function stage(scan: Plane[], head: Vec3, forward: Vec3 = [0, 0, -1]): StageResult {
+  const fl = Math.hypot(forward[0], forward[2]);
+  FORWARD = fl > 0.2 ? [forward[0] / fl, 0, forward[2] / fl] : [0, 0, -1]; // looking straight up or down: assume ahead
+  const planes = completeRoom(scan, head, FORWARD);
   const floors = planes.filter((p) => p.label === 'floor' && isUp(p));
   const floorPlane =
     floors.sort((a, b) => area(b) - area(a))[0] ??
-    planes.filter(isUp).sort((a, b) => a.center[1] - b.center[1])[0];
+    planes.filter((p) => isUp(p) && p.center[1] < head[1] - 0.8).sort((a, b) => a.center[1] - b.center[1])[0];
   const floorY = floorPlane ? floorPlane.center[1] : head[1] - 1.2;
 
   // Raised horizontal surfaces a small figure can stand on (seat height to counter height).
@@ -274,7 +279,7 @@ export function stage(planes: Plane[], head: Vec3, forward: Vec3 = [0, 0, -1]): 
     if (placed) break;
   }
 
-  return { spots, floorY };
+  return { spots, floorY, planes };
 }
 
 /** Furniture as solid boxes: from the floor up to the surface, plus a back for couches and beds. */

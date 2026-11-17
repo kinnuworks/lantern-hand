@@ -40,6 +40,17 @@ def fail(msg):
     print("WALKTHROUGH FAIL:", msg); sys.exit(1)
 
 cli("browser", "reload"); time.sleep(4)
+# Start from chapter one: use the landing page's own "Start again" link when progress is saved.
+cleared = False
+snap = ""
+for _ in range(25):
+    snap = cli("browser", "snapshot")
+    if '"Enter' not in snap: time.sleep(1); continue
+    if "Start again from chapter one" not in snap: cleared = True; break
+    cli("browser", "interact", "--input-json", json.dumps({"steps": [{"action": "click", "locator": {"role": "button", "name": "Start again from chapter one"}}]}))
+    time.sleep(1)
+    if logs("^PROGRESS_CLEARED"): cleared = True; break
+if not cleared: fail("could not start from chapter one (landing page never ready, or saved progress not cleared)")
 
 call("set-transform", {"device": "headset", "position": {"x": 0, "y": 1.2, "z": 0}})
 cli("browser", "interact", "--input-json", json.dumps({"steps": [{"action": "click", "locator": {"role": "button", "name": "Enter"}}]})); time.sleep(2)

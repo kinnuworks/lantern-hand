@@ -27,11 +27,15 @@ function degrade(name: string, planes: Plane[]): Case[] {
     { name: `${name}/no-couch`, base: name, test: true, planes: planes.filter((p) => !['couch', 'bed', 'sofa'].includes(p.label)) },
     { name: `${name}/no-window-door`, base: name, test: true, planes: planes.filter((p) => !['window', 'door'].includes(p.label)) },
     { name: `${name}/floor-walls-only`, base: name, test: true, planes: planes.filter((p) => ['floor', 'wall'].includes(p.label)) },
+    // Added after our own bug check (field/data/deep/ours-388ca34): partial scans with no floor.
+    { name: `${name}/table-only`, base: name, test: true, planes: planes.filter((p) => ['table', 'desk'].includes(p.label)).slice(0, 1) },
+    { name: `${name}/walls-only`, base: name, test: true, planes: planes.filter((p) => p.orientation === 'vertical') },
   ];
 }
 
 function headFor(planes: Plane[]): Vec3 {
   const floor = planes.filter((p) => p.label === 'floor')[0];
+  // Emulator rooms put the floor at y = 0; scans with no floor still have the viewer at seated height.
   const fy = floor ? floor.center[1] : 0;
   if (planes.some((p) => p.id.startsWith('s-'))) return [0.3, 1.2, -0.2];
   return [0, fy + 1.2, 0]; // seated viewer at the emulator's origin
@@ -67,6 +71,7 @@ function check(planes: Plane[], spots: Spot[], head: Vec3): string[] {
     }
     if (dist(s.pos, head) > 5) fails.push(`${beat}: ${dist(s.pos, head).toFixed(1)} m from the viewer`);
     const fy = Math.min(...planes.filter((q) => q.label === 'floor').map((q) => q.center[1]), head[1] - 1.2);
+    void fy;
     if (occluded(planes, head, [s.pos[0], s.pos[1] + 0.12, s.pos[2]], fy, s.planeId)) fails.push(`${beat}: hidden behind furniture from the viewer's seat`);
     if (offAxis(s.pos, head, FWD) > 75) fails.push(`${beat}: ${offAxis(s.pos, head, FWD).toFixed(0)} deg off the viewer's forward view`);
   }
@@ -78,6 +83,7 @@ function check(planes: Plane[], spots: Spot[], head: Vec3): string[] {
 
 /** Our own naive baseline: fixed offsets from the viewer, no scene data. */
 function baseline(planes: Plane[], head: Vec3): Spot[] {
+  if (!planes.length) return [];
   const fy = head[1] - 1.2;
   const fixed: Record<string, Vec3> = {
     table: [0, fy + 0.75, -0.7], ridge: [0.6, fy + 0.45, -1.2], sea: [0, fy, -1.6],
@@ -97,7 +103,8 @@ const cases: Case[] = [];
 for (const f of readdirSync(dir).filter((f) => f.endsWith('.json')).sort()) {
   const room = JSON.parse(readFileSync(join(dir, f), 'utf8'));
   cases.push({ name: room.room, base: room.room, planes: room.planes, test: !TUNE.has(room.room) });
-  cases.push(...degrade(room.room, room.planes));
+  // A scan with no planes left at all is the stand-in room's job (covered by the stand-in cases).
+  cases.push(...degrade(room.room, room.planes).filter((c) => c.planes.length > 0));
 }
 
 // The stand-in room used when a headset has no room scan, facing four directions.
@@ -111,8 +118,9 @@ const angles: number[] = [];
 for (const c of cases) {
   const head = headFor(c.planes);
   FWD = forwardFor(c);
-  const { spots } = stage(c.planes, head, forwardFor(c));
-  const fails = check(c.planes, spots, head);
+  const staged = stage(c.planes, head, forwardFor(c));
+  const spots = staged.spots;
+  const fails = check(staged.planes, spots, head);
   const bfails = check(c.planes, baseline(c.planes, head), head);
   if (c.test) { n++; if (fails.length === 0) k++; if (bfails.length === 0) bk++; for (const s of spots) angles.push(offAxis(s.pos, head, FWD)); }
   const used = spots.map((s) => `${s.beat}:${s.label}${s.fallback ? '*' : ''}`).join(' ');

@@ -26,3 +26,34 @@ export function standinRoom(head: Vec3, forward: Vec3): Plane[] {
     wall('s-window', 'window', at(2.98, -0.4, floorY + 1.45), 0.55, 0.45),
   ];
 }
+
+/**
+ * Fill the gaps in a partial room scan with stand-in pieces, so every beat has somewhere
+ * real or paper to happen. Returns the scan plus only the pieces it was missing.
+ * Pieces from here have ids starting "s-"; the story draws the raised ones as paper.
+ */
+export function completeRoom(planes: Plane[], head: Vec3, forward: Vec3): Plane[] {
+  const l = Math.hypot(forward[0], forward[2]);
+  const fwd: Vec3 = l > 0.2 ? [forward[0] / l, 0, forward[2] / l] : [0, 0, -1];
+  const standin = standinRoom(head, fwd);
+  const inFront = (p: Plane) => {
+    const dx = p.center[0] - head[0], dz = p.center[2] - head[2];
+    const d = Math.hypot(dx, dz) || 1;
+    return (dx * fwd[0] + dz * fwd[2]) / d > 0.2;
+  };
+  const up = (p: Plane) => p.orientation === 'horizontal' && p.normal[1] > 0.7;
+  const hasFloor = planes.some((p) => up(p) && p.center[1] < head[1] - 0.8);
+  const floorY = hasFloor ? Math.min(...planes.filter((p) => up(p)).map((p) => p.center[1])) : head[1] - 1.15;
+  const hasRaised = planes.some((p) => up(p) && p.center[1] > floorY + 0.25 && p.center[1] < floorY + 1.3 && inFront(p));
+  const hasWall = planes.some((p) => p.orientation === 'vertical' && inFront(p));
+  const add: Plane[] = [];
+  const pick = (ids: string[]) => standin.filter((p) => ids.includes(p.id)).map((p) => {
+    // Sit stand-in pieces on the real floor when there is one.
+    const dy = floorY - (head[1] - 1.15);
+    return { ...p, center: [p.center[0], p.center[1] + dy, p.center[2]] as Vec3 };
+  });
+  if (!hasFloor) add.push(...pick(['s-floor']));
+  if (!hasRaised) add.push(...pick(['s-table', 's-couch']));
+  if (!hasWall) add.push(...pick(['s-wall', 's-door', 's-window']));
+  return add.length ? [...planes, ...add] : planes;
+}
