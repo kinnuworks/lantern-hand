@@ -46,7 +46,7 @@ Evidence, stated plainly: no real users yet; it was built for this hackathon. In
 
 Earlier runs failed (18 of 30 on the first run); what broke and what we fixed is listed in [`evidence/EVAL_PLAN.md`](evidence/EVAL_PLAN.md).
 
-Walkthroughs of both chapters in the emulator, driven with emulated hands only: `cd app && python3 tests/walkthrough.py --knock` (hands and knock) and `python3 tests/walkthrough.py --gaze` (no hands at all).
+Walkthroughs of both chapters in the emulator, driven with emulated hands only: `cd app && python3 tests/walkthrough.py --knock` (hands and knock) and `python3 tests/walkthrough.py --gaze` (no hands at all). Every run is logged with its commit, emulated device (Quest 3 or Meta VR Glasses) and result in [`evidence/walkthroughs/runs.md`](evidence/walkthroughs/runs.md).
 
 ## What doesn't work yet
 
