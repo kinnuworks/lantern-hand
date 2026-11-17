@@ -24,6 +24,16 @@ export const LINES = {
   hintGeneric: vo('h02-generic', 'Light the next place he can reach. Look for the little glow.'),
 } as const;
 
+const c2 = (f: string, text: string): Line => ({ audio: `audio/vo/c2/${f}.mp3`, text });
+export const C2 = {
+  sill: c2('c01-sill', "He's still on your windowsill. Tonight he wants to climb up to the moon, but he needs stars to stand on."),
+  star1: c2('c02-star1', 'Point your lantern at the glow, and hang a star there.'),
+  star2: c2('c03-star2', 'One more. A little higher.'),
+  star3: c2('c04-star3', 'And the last one, right at the top.'),
+  moon: c2('c05-moon', "There's the moon. Watch him go."),
+  end: c2('c06-end', "He made it. He'll sleep up there tonight. Come back tomorrow, and the moon will take him somewhere new."),
+} as const;
+
 export const SFX = {
   chime: 'audio/sfx/chime.mp3',
   steps: 'audio/sfx/steps.mp3',
@@ -47,6 +57,8 @@ export const ART = {
   gate: 'art/gate.png',
   sun: 'art/sun.png',
   handHint: 'art/hand-hint.png',
+  star: 'art/star.png',
+  moon: 'art/moon.png',
 } as const;
 
 /** The line that asks for a beat. Generic when the room had no matching label. */
@@ -57,6 +69,7 @@ export function askLine(beat: BeatId, fallback: boolean): Line {
     case 'sea': return LINES.floor;
     case 'gate': return fallback ? LINES.hintGeneric : LINES.gate;
     case 'window': return fallback ? LINES.hintGeneric : LINES.window;
+    default: return LINES.hintPoint;
   }
 }
 

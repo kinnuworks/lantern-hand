@@ -16,6 +16,7 @@
       ol { font-size: 17px; line-height: 1.6; padding-left: 22px; margin: 0 0 24px; }
       button { font: inherit; font-size: 20px; padding: 14px 28px; border-radius: 999px; border: 0; background: #f2c46b; color: #1a1408; cursor: pointer; }
       button:disabled { background: #555; color: #bbb; cursor: default; }
+      button.link { background: none; color: #f4efe6; text-decoration: underline; padding: 14px 8px; font-size: 16px; }
       #status { font-size: 15px; opacity: 0.8; margin-top: 14px; }
     </style>
   </head>
@@ -30,6 +31,7 @@
           <li>Press Enter, then hold one hand out, palm open.</li>
         </ol>
         <button id="enter" disabled>Enter</button>
+        <button id="restart" class="link" hidden>Start again from chapter one</button>
         <div id="status">Checking for mixed reality…</div>
       </div>
     </div>

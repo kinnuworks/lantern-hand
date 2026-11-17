@@ -131,7 +131,24 @@ t = time.time()
 while time.time() - t < 30 and not logs("^RETURN_VISIT"): time.sleep(1.5)
 if not logs("^RETURN_VISIT"): fail("a returning visit did not find Wick where the chapter ended")
 shot("05-return")
+
+# Chapter two: three stars on the wall above the sill, then the climb to the moon.
+call("set-hand-pose", {"device": "hand-right", "poseId": "open"})
+for star in ["star1", "star2", "star3"]:
+    t = time.time(); done = []
+    while time.time() - t < 60:
+        done = [m for m in logs("^BEAT_LIT ") if m.split()[1] == star]
+        if done: break
+        tg = [m for m in logs("^TARGET ") if m.split()[1] == star]
+        if tg: aim(json.loads(tg[-1].split(" ", 2)[2]))
+        time.sleep(1.5)
+    if not done: fail(f"chapter two: {star} never lit")
+    if done[-1].split()[2] != "by-light": fail(f"chapter two: {star} advanced by timeout")
+t = time.time()
+while time.time() - t < 60 and not logs("^CHAPTER_END 2"): time.sleep(2)
+if not logs("^CHAPTER_END 2"): fail("chapter two did not end")
+shot("06-chapter-two")
 errs = [m for m in logs("error|Error") if "favicon" not in m]
 print("lit:", lit)
-print("WALKTHROUGH PASS: lantern lit by an open hand; every beat lit by the hand's light; chapter ended; return visit resumed",
+print("WALKTHROUGH PASS: lantern lit by an open hand; every beat lit by the hand's light; chapter ended; return visit played chapter two to the end",
       f"({len(errs)} console lines matching 'error')")

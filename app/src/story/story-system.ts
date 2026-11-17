@@ -20,7 +20,7 @@ import type { BeatId, Plane, Spot, Vec3 } from '../room/types.js';
 import { Caption } from './caption.js';
 import { Hands } from './hands.js';
 import { makeCutout, setCutoutImage } from './cutout.js';
-import { ART, askLine, LINES, MUSIC, ORDER, SFX } from './script.js';
+import { ART, askLine, C2, LINES, MUSIC, ORDER, SFX } from './script.js';
 import type { Line } from './script.js';
 import { Sound } from './sound.js';
 
@@ -84,7 +84,7 @@ export class StorySystem extends createSystem({}) {
     this.scene.add(this.root);
     this.sound = new Sound(this.camera);
     this.caption = new Caption(this.camera);
-    void this.sound.preload([...Object.values(LINES).map((l) => l.audio), ...Object.values(SFX), MUSIC]);
+    void this.sound.preload([...Object.values(LINES).map((l) => l.audio), ...Object.values(C2).map((l) => l.audio), ...Object.values(SFX), MUSIC]);
 
     // The night: a soft dark veil over passthrough that lifts at dawn.
     this.night = new Mesh(
@@ -139,21 +139,16 @@ export class StorySystem extends createSystem({}) {
     this.sound.resume();
     void this.sound.startMusic(MUSIC);
     this.phase = 'intro';
-    const start = new URLSearchParams(location.search).get('state') as BeatId | 'end' | null;
+    const start = new URLSearchParams(location.search).get('state') as BeatId | 'end' | 'ch2' | null;
     void this.run(start);
   }
 
-  private async run(start: BeatId | 'end' | null) {
+  private async run(start: BeatId | 'end' | 'ch2' | null) {
     const saved = readSave();
     const table = this.spots.get('table')!;
-    if (!start && saved.finished) {
-      // Returning visitor: he is waiting on the window sill.
-      console.log('RETURN_VISIT');
-      const w = this.spots.get('window') ?? table;
-      await this.placeTraveller(w, ART.sitting);
-      await this.say({ audio: LINES.bye.audio, text: "He's still here, on the sill. Chapter two arrives tomorrow night. Hold up your hand to walk tonight's road again." });
-      await this.waitLantern();
-      saved.finished = false; writeSave(saved);
+    if (start === 'ch2' || (!start && saved.chapter >= 1)) {
+      await this.chapterTwo(saved.chapter >= 2);
+      return;
     }
 
     // Intro: the lantern.
@@ -239,12 +234,65 @@ export class StorySystem extends createSystem({}) {
     await this.say(LINES.dawn);
     await this.say(LINES.bye);
     this.caption.show('Lantern Hand  ·  Chapter one: The long way to the window');
-    const save = readSave(); save.finished = true; save.chapter = 1; writeSave(save);
+    const save = readSave(); save.finished = true; save.chapter = Math.max(save.chapter, 1); writeSave(save);
     this.phase = 'done';
     console.log('CHAPTER_END');
   }
 
   private rise: { mesh: Object3D; from: number; to: number; t: number } | null = null;
+
+  /** Chapter two: from the windowsill, hang three stars on the wall and climb to the moon. */
+  private async chapterTwo(again: boolean) {
+    console.log('RETURN_VISIT');
+    const w = this.spots.get('window') ?? this.spots.get('table')!;
+    await this.placeTraveller(w, ART.sitting);
+    if (again) {
+      this.caption.show('Chapter three is still being written. Here is chapter two again.');
+      await new Promise((r) => setTimeout(r, 4000));
+    }
+    await this.say(C2.sill);
+    await this.waitLantern();
+    if (!this.gazeMode) void this.sound.at(this.lantern, SFX.chime);
+    this.phase = 'story';
+
+    // Star spots on the wall above the sill: up the wall, swinging left and right.
+    const plane = this.planes.find((p) => p.id === w.planeId);
+    const n = plane && plane.orientation === 'vertical' ? plane.normal : ([0, 0, 1] as Vec3);
+    const right = new Vector3(n[2], 0, -n[0]).normalize();
+    const offs: [number, number][] = [[-0.16, 0.34], [0.14, 0.62], [-0.05, 0.9]];
+    const lines = [C2.star1, C2.star2, C2.star3];
+    const beats: BeatId[] = ['star1', 'star2', 'star3'];
+    const stars: Spot[] = [];
+    for (let i = 0; i < 3; i++) {
+      const pos: Vec3 = [w.pos[0] + right.x * offs[i][0], w.pos[1] + offs[i][1], w.pos[2] + right.z * offs[i][0]];
+      const spot: Spot = { beat: beats[i], pos, normal: n, planeId: w.planeId, label: 'star', fallback: false };
+      stars.push(spot);
+      void this.say(lines[i]);
+      await this.waitLit(spot);
+      const star = await makeCutout(ART.star, 0.13);
+      star.position.set(pos[0], pos[1] - 0.06, pos[2]);
+      this.tmpV.set(pos[0] + n[0], pos[1] - 0.06, pos[2] + n[2]);
+      star.lookAt(this.tmpV);
+      this.root.add(star);
+      void this.sound.at(star, SFX.chime, { volume: 0.6 });
+    }
+    const top = stars[2].pos;
+    const moon = await makeCutout(ART.moon, 0.3);
+    moon.position.set(top[0] - right.x * 0.2, top[1] + 0.22, top[2] - right.z * 0.2);
+    this.tmpV.set(moon.position.x + n[0], moon.position.y, moon.position.z + n[2]);
+    moon.lookAt(this.tmpV);
+    this.root.add(moon);
+    await setCutoutImage(this.traveller, ART.traveller, TRAVELLER_H * 0.8);
+    await this.say(C2.moon);
+    for (const st of stars) await this.travel({ ...st, pos: [st.pos[0], st.pos[1] - 0.02, st.pos[2]] }, 'hop');
+    await this.travel({ ...stars[2], pos: [moon.position.x, moon.position.y + 0.02, moon.position.z] }, 'hop');
+    await setCutoutImage(this.traveller, ART.asleep, TRAVELLER_H * 0.6);
+    await this.say(C2.end);
+    this.caption.show('Lantern Hand  ·  Chapter two: Three stars to the moon');
+    const save = readSave(); save.finished = true; save.chapter = 2; writeSave(save);
+    this.phase = 'done';
+    console.log('CHAPTER_END 2');
+  }
 
   /** Paper surfaces for the stand-in room, so Wick never stands on thin air. */
   private drawStandin(planes: Plane[]) {
@@ -274,7 +322,7 @@ export class StorySystem extends createSystem({}) {
   }
 
   private waitLit(spot: Spot): Promise<void> {
-    console.log(`TARGET ${spot.beat}`);
+    console.log(`TARGET ${spot.beat} ${JSON.stringify(spot.pos)}`);
     this.target = spot;
     this.litFor = 0;
     this.waitingFor = 0;

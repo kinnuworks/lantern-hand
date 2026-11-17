@@ -16,7 +16,7 @@ export interface Plane {
   halfZ: number;
 }
 
-export type BeatId = 'table' | 'ridge' | 'sea' | 'gate' | 'window';
+export type BeatId = 'table' | 'ridge' | 'sea' | 'gate' | 'window' | 'star1' | 'star2' | 'star3';
 
 /** Where one story beat happens. */
 export interface Spot {
