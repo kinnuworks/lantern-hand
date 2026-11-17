@@ -9,6 +9,7 @@ import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { stage, under, isUp, offAxis, occluded } from '../app/src/room/stage.ts';
 import type { Plane, Spot, Vec3 } from '../app/src/room/types.ts';
+import { standinRoom } from '../app/src/room/standin.ts';
 
 const SEED = 20261118;
 const TUNE = new Set(['sunlit_living_room', 'home_office']);
@@ -32,10 +33,17 @@ function degrade(name: string, planes: Plane[]): Case[] {
 function headFor(planes: Plane[]): Vec3 {
   const floor = planes.filter((p) => p.label === 'floor')[0];
   const fy = floor ? floor.center[1] : 0;
+  if (planes.some((p) => p.id.startsWith('s-'))) return [0.3, 1.2, -0.2];
   return [0, fy + 1.2, 0]; // seated viewer at the emulator's origin
 }
 
+function forwardFor(c: { name: string }): Vec3 {
+  const m = c.name.match(/standin\/facing-(\d)/);
+  return m ? ([[0, 0, -1], [1, 0, 0], [0, 0, 1], [-0.7, 0, -0.7]] as Vec3[])[+m[1]] : [0, 0, -1];
+}
+
 /** Every failure reason for one staged room (empty list = pass). */
+let FWD: Vec3 = [0, 0, -1];
 function check(planes: Plane[], spots: Spot[], head: Vec3): string[] {
   const fails: string[] = [];
   const byId = new Map(planes.map((p) => [p.id, p]));
@@ -60,7 +68,7 @@ function check(planes: Plane[], spots: Spot[], head: Vec3): string[] {
     if (dist(s.pos, head) > 5) fails.push(`${beat}: ${dist(s.pos, head).toFixed(1)} m from the viewer`);
     const fy = Math.min(...planes.filter((q) => q.label === 'floor').map((q) => q.center[1]), head[1] - 1.2);
     if (occluded(planes, head, [s.pos[0], s.pos[1] + 0.12, s.pos[2]], fy, s.planeId)) fails.push(`${beat}: hidden behind furniture from the viewer's seat`);
-    if (offAxis(s.pos, head) > 75) fails.push(`${beat}: ${offAxis(s.pos, head).toFixed(0)} deg off the viewer's forward view`);
+    if (offAxis(s.pos, head, FWD) > 75) fails.push(`${beat}: ${offAxis(s.pos, head, FWD).toFixed(0)} deg off the viewer's forward view`);
   }
   for (let i = 1; i < spots.length; i++) {
     if (dist(spots[i].pos, spots[i - 1].pos) < 0.2) fails.push(`${spots[i].beat}: on top of ${spots[i - 1].beat}`);
@@ -92,11 +100,17 @@ for (const f of readdirSync(dir).filter((f) => f.endsWith('.json')).sort()) {
   cases.push(...degrade(room.room, room.planes));
 }
 
+// The stand-in room used when a headset has no room scan, facing four directions.
+for (const [i, fwd] of ([[0, 0, -1], [1, 0, 0], [0, 0, 1], [-0.7, 0, -0.7]] as Vec3[]).entries()) {
+  cases.push({ name: `standin/facing-${i}`, base: 'standin', test: true, planes: standinRoom([0.3, 1.2, -0.2], fwd) });
+}
+
 const rows: string[] = [];
 let k = 0, n = 0, bk = 0;
 for (const c of cases) {
   const head = headFor(c.planes);
-  const { spots } = stage(c.planes, head);
+  FWD = forwardFor(c);
+  const { spots } = stage(c.planes, head, forwardFor(c));
   const fails = check(c.planes, spots, head);
   const bfails = check(c.planes, baseline(c.planes, head), head);
   if (c.test) { n++; if (fails.length === 0) k++; if (bfails.length === 0) bk++; }

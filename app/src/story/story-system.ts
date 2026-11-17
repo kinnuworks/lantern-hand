@@ -7,6 +7,7 @@ import {
   Group,
   Mesh,
   MeshBasicMaterial,
+  PlaneGeometry,
   RingGeometry,
   SphereGeometry,
   Vector3,
@@ -27,7 +28,7 @@ type Phase = 'waiting-room' | 'intro' | 'story' | 'done';
 type MoveKind = 'walk' | 'hop' | 'sail';
 interface Move { from: Vector3; to: Vector3; kind: MoveKind; t: number; dur: number; done: () => void }
 
-const TRAVELLER_H = 0.27;
+const TRAVELLER_H = 0.33;
 const LIT_RADIUS = 0.42; // how close the light pool must be to the glow (metres)
 const AIM_CONE = 14; // degrees: pointing this close to the glow snaps the light onto it (hands are noisy)
 const LIT_DWELL = 0.7; // seconds the light must rest there
@@ -97,7 +98,7 @@ export class StorySystem extends createSystem({}) {
     this.glow.visible = false;
     this.root.add(this.glow);
 
-    void Promise.all([makeCutout(ART.asleep, TRAVELLER_H * 0.75), makeCutout(ART.lantern, 0.075)]).then(([t, l]) => {
+    void Promise.all([makeCutout(ART.asleep, TRAVELLER_H * 0.75), makeCutout(ART.lantern, 0.11)]).then(([t, l]) => {
       this.traveller = t;
       this.traveller.visible = false;
       this.root.add(t);
@@ -107,16 +108,18 @@ export class StorySystem extends createSystem({}) {
     });
 
     const room = this.world.getSystem(RoomSystem);
-    room?.onRoom((planes) => this.begin(planes));
+    room?.onRoom((planes, standin) => this.begin(planes, standin));
     (window as unknown as { __story: unknown }).__story = this;
   }
 
   /** Room is known: stage it and start the chapter. */
-  private begin(planes: Plane[]) {
+  private begin(planes: Plane[], standin: boolean) {
     if (this.phase !== 'waiting-room') return;
     this.planes = planes;
     this.camera.getWorldPosition(this.head);
-    const { spots } = stage(planes, [this.head.x, this.head.y, this.head.z]);
+    this.camera.getWorldDirection(this.tmpD);
+    const { spots } = stage(planes, [this.head.x, this.head.y, this.head.z], [this.tmpD.x, 0, this.tmpD.z]);
+    if (standin) this.drawStandin(planes);
     for (const s of spots) this.spots.set(s.beat, s);
     (window as unknown as { __spots: Spot[] }).__spots = spots;
     console.log('STAGED ' + JSON.stringify(spots.map((s) => ({ beat: s.beat, label: s.label, fallback: s.fallback, pos: s.pos }))));
@@ -141,6 +144,10 @@ export class StorySystem extends createSystem({}) {
 
     // Intro: the lantern.
     await this.placeTraveller(table, ART.asleep);
+    if (this.standinNote) {
+      this.caption.show("No room scan yet, so Wick is using a paper stand-in room. Set up your space in the headset's settings to play on your own furniture.");
+      await new Promise((r) => setTimeout(r, 6000));
+    }
     if (!start || start === 'table') {
       await this.say(LINES.intro);
       await this.waitLantern();
@@ -222,6 +229,21 @@ export class StorySystem extends createSystem({}) {
   }
 
   private rise: { mesh: Object3D; from: number; to: number; t: number } | null = null;
+
+  /** Paper surfaces for the stand-in room, so Wick never stands on thin air. */
+  private drawStandin(planes: Plane[]) {
+    this.standinNote = true;
+    for (const p of planes) {
+      if (p.label === 'floor' || p.label === 'wall') continue;
+      const mesh = new Mesh(new PlaneGeometry(p.halfX * 2, p.halfZ * 2), new MeshBasicMaterial({ color: new Color(p.orientation === 'horizontal' ? '#d9c7a3' : '#c9b48f'), transparent: true, opacity: 0.85 }));
+      mesh.position.set(...p.center);
+      this.tmpV.set(p.center[0] + p.normal[0], p.center[1] + p.normal[1], p.center[2] + p.normal[2]);
+      mesh.lookAt(this.tmpV);
+      this.root.add(mesh);
+    }
+  }
+
+  private standinNote = false;
 
   // ---- helpers -------------------------------------------------------------------------
 

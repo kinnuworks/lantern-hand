@@ -1,6 +1,6 @@
 # Staging break test (seed 20261118)
 
-Test slice: 30 of 30 rooms pass. Our own naive baseline (fixed offsets, no scene data): 0 of 30.
+Test slice: 34 of 34 rooms pass. Our own naive baseline (fixed offsets, no scene data): 0 of 34.
 Tuning rooms (sunlit_living_room, home_office) are listed but not counted. `*` marks a fallback surface.
 
 | Room | Slice | Result | Where each beat landed | Failures | Naive baseline |
@@ -37,3 +37,7 @@ Tuning rooms (sunlit_living_room, home_office) are listed but not counted. `*` m
 | sunlit_living_room/no-couch | test | pass | table:table ridge:table* sea:floor gate:wall art* window:window | - | fail (5) |
 | sunlit_living_room/no-window-door | test | pass | table:table ridge:couch sea:floor gate:wall* window:wall art* | - | fail (4) |
 | sunlit_living_room/floor-walls-only | test | pass | table:floor* ridge:floor* sea:floor gate:wall* window:wall* | - | fail (4) |
+| standin/facing-0 | test | pass | table:table ridge:couch sea:floor gate:door window:window | - | fail (9) |
+| standin/facing-1 | test | pass | table:table ridge:couch sea:floor gate:door window:window | - | fail (10) |
+| standin/facing-2 | test | pass | table:table ridge:couch sea:floor gate:door window:window | - | fail (12) |
+| standin/facing-3 | test | pass | table:table ridge:couch sea:floor gate:door window:window | - | fail (6) |

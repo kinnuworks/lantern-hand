@@ -2,7 +2,7 @@
 
 Hold out your open hand and it becomes a paper lantern. A small paper traveller called Wick wakes on your real table and crosses your room toward your window, walking only where you shine the light.
 
-It needs a Meta Quest because the whole story is staged on your own furniture: the headset's scene understanding tells it where your table, couch, floor, door and window are, and hand tracking turns your palm into the light he follows. With passthrough off, or in a different room, it plays out differently.
+It needs a Meta Quest because the whole story is staged on your own furniture: the headset's scene understanding tells it where your table, couch, floor, door and window are, and hand tracking turns your palm into the light he follows. Every room gives a different journey, because the route is built from your room's own surfaces. Headsets with no room scan get a small paper stand-in room instead.
 
 **Live:** https://lantern-hand.vercel.app (open it in the Meta Quest Browser on Quest 3 or 3S)
 
