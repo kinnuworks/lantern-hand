@@ -70,6 +70,7 @@ export class StorySystem extends createSystem({}) {
   private lanternLit = false;
   private onLanternLit: (() => void) | null = null;
   private dawn = 0; // 0 night, 1 sunrise
+  private gazeMode = false;
 
   private tmpO = new Vector3();
   private tmpD = new Vector3();
@@ -135,6 +136,7 @@ export class StorySystem extends createSystem({}) {
     const table = this.spots.get('table')!;
     if (!start && saved.finished) {
       // Returning visitor: he is waiting on the window sill.
+      console.log('RETURN_VISIT');
       const w = this.spots.get('window') ?? table;
       await this.placeTraveller(w, ART.sitting);
       await this.say({ audio: LINES.bye.audio, text: "He's still here, on the sill. Chapter two arrives tomorrow night. Hold up your hand to walk tonight's road again." });
@@ -151,8 +153,10 @@ export class StorySystem extends createSystem({}) {
     if (!start || start === 'table') {
       await this.say(LINES.intro);
       await this.waitLantern();
-      void this.sound.at(this.lantern, SFX.chime);
-      await this.say(LINES.lantern);
+      if (!this.gazeMode) {
+        void this.sound.at(this.lantern, SFX.chime);
+        await this.say(LINES.lantern);
+      }
     } else {
       this.lanternLit = true;
     }
@@ -334,6 +338,15 @@ export class StorySystem extends createSystem({}) {
     } else {
       this.lantern.visible = false;
       this.noHandFor += dt;
+      // No hands at all (or hands the tracker can't see): carry on with looking instead of pointing.
+      if (!this.lanternLit && this.noHandFor > GAZE_AFTER + 3 && this.onLanternLit) {
+        this.lanternLit = true;
+        this.gazeMode = true;
+        console.log('GAZE_MODE');
+        this.caption.show('No hands needed: just look at the little glow and hold your gaze there.');
+        this.onLanternLit();
+        this.onLanternLit = null;
+      }
     }
 
     // Beam: from the open hand, or from the head after a while with no hand (accessibility).
