@@ -127,7 +127,10 @@ export interface StageResult {
   planes: Plane[];
 }
 
-export function stage(scan: Plane[], head: Vec3, forward: Vec3 = [0, 0, -1]): StageResult {
+export function stage(scan: Plane[], headIn: Vec3, forward: Vec3 = [0, 0, -1]): StageResult {
+  // A pose the tracker hasn't settled yet can arrive as NaN: assume a seated viewer at the origin.
+  const head: Vec3 = headIn.every(Number.isFinite) ? headIn : [0, 1.2, 0];
+  if (!forward.every(Number.isFinite)) forward = [0, 0, -1];
   const fl = Math.hypot(forward[0], forward[2]);
   FORWARD = fl > 0.2 ? [forward[0] / fl, 0, forward[2] / fl] : [0, 0, -1]; // looking straight up or down: assume ahead
   const first = stageOnce(completeRoom(scan, head, FORWARD), head);
@@ -223,7 +226,7 @@ function stageOnce(planes: Plane[], head: Vec3): StageResult {
   }
   if (ridgePlane && ridgePt) {
     push('ridge', ridgePlane, ridgePt, ridgeFallback);
-  } else if (tablePlane && tablePlane !== floorPlane) {
+  } else if (tablePlane && tablePlane !== floorPlane && flat(clampToPlane(tablePlane, (() => { const t = spots[0].pos; const w = add(t, mul(sub(t, head), 1)); return [w[0], t[1], w[2]] as Vec3; })()), spots[0].pos) >= 0.3) {
     // Same surface as the table: walk to its far side.
     const t = spots[0].pos;
     const away = add(t, mul(sub(t, head), 1));
@@ -250,17 +253,22 @@ function stageOnce(planes: Plane[], head: Vec3): StageResult {
     const from = spots[spots.length - 1]?.pos ?? head;
     const blockers = planes.filter((p) => isUp(p) && p.center[1] > floorY + 0.1);
     let placed = false;
-    for (const fp of floorsByArea.length ? floorsByArea : [floorPlane]) {
+    // No clear floor in view (say, sitting right beside a bed): any large flat surface can be the sea.
+    const bigFlats = planes.filter((p) => isUp(p) && p.center[1] > floorY + 0.1 && area(p) > 0.3).sort((a, b) => area(b) - area(a));
+    for (const fp of [...(floorsByArea.length ? floorsByArea : [floorPlane]), ...bigFlats]) {
+      const surfY = fp.center[1];
       const candidates: Vec3[] = [];
       // Around where he last stood first, then around the open floor just ahead of the viewer.
       for (const c0 of [from, ahead(head, 1.0)]) {
         for (let r = c0 === from ? 0.5 : 0; r <= 2.5; r += 0.25) {
           for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
-            candidates.push(clampToPlane(fp, [c0[0] + Math.cos(a) * r, floorY, c0[2] + Math.sin(a) * r]));
+            candidates.push(clampToPlane(fp, [c0[0] + Math.cos(a) * r, surfY, c0[2] + Math.sin(a) * r]));
           }
         }
       }
-      const free = candidates.filter((c) => !blockers.some((b) => under(b, c)) && flat(c, head) > 0.45 && flat(c, head) <= MAX_REACH && offAxis(c, head) < 60 && !occluded(planes, head, [c[0], c[1] + 0.12, c[2]], floorY));
+      // Strict first; then allow a wider angle and closer spots, but never hidden, under furniture or on top of another beat.
+      let free = candidates.filter((c) => spots.every((q) => flat(q.pos, c) >= 0.35) && !blockers.some((b) => b.id !== fp.id && under(b, c)) && flat(c, head) > 0.45 && flat(c, head) <= MAX_REACH && offAxis(c, head) < 60 && !occluded(planes, head, [c[0], c[1] + 0.12, c[2]], floorY, fp.id));
+      if (!free.length) free = candidates.filter((c) => spots.every((q) => flat(q.pos, c) >= 0.25) && !blockers.some((b) => b.id !== fp.id && under(b, c)) && flat(c, head) > 0.3 && flat(c, head) <= MAX_REACH && offAxis(c, head) < 72 && !occluded(planes, head, [c[0], c[1] + 0.12, c[2]], floorY, fp.id));
       const pick = free.sort((a, b) => flat(a, from) + offAxis(a, head) / 25 - (flat(b, from) + offAxis(b, head) / 25))[0];
       if (pick) { push('sea', fp, pick, fp !== floorPlane); placed = true; break; }
     }
@@ -293,20 +301,25 @@ function stageOnce(planes: Plane[], head: Vec3): StageResult {
     if (occluded(planes, head, [g.pos[0], g.pos[1] + 0.12, g.pos[2]], floorY, g.planeId)) spots.splice(gi, 1);
   }
   if (!spots.some((x) => x.beat === 'gate') && floorPlane) {
-    // No clear wall in view: the paper gate stands on open floor, past the sea.
+    // No clear wall in view: the paper gate stands on open floor past the sea, or on any big flat surface in view.
     const from = prevPos();
     const blockers = planes.filter((p) => isUp(p) && p.center[1] > floorY + 0.1);
+    const surfaces = [floorPlane, ...planes.filter((p) => isUp(p) && p !== floorPlane && p.center[1] > floorY + 0.1 && area(p) > 0.3).sort((a, b) => area(b) - area(a))];
     let best: Vec3 | null = null;
-    for (let r = 0.4; r <= 2 && !best; r += 0.2) {
-      for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
-        const c = clampToPlane(floorPlane, [from[0] + Math.cos(a) * r, floorY, from[2] + Math.sin(a) * r]);
-        if (offAxis(c, head) > MAX_ANGLE || flat(c, head) < 0.7 || flat(c, head) > MAX_REACH) continue;
-        if (blockers.some((bl) => under(bl, c)) || spots.some((q) => flat(q.pos, c) < 0.35)) continue;
-        if (occluded(planes, head, [c[0], c[1] + 0.12, c[2]], floorY)) continue;
-        best = c; break;
+    let bestPlane: Plane = floorPlane;
+    for (const sp of surfaces) {
+      for (const relax of [false, true]) for (let r = 0.4; r <= 2.4 && !best; r += 0.2) {
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+          const c = clampToPlane(sp, [from[0] + Math.cos(a) * r, sp.center[1], from[2] + Math.sin(a) * r]);
+          if (offAxis(c, head) > (relax ? 72 : MAX_ANGLE) || flat(c, head) < (relax ? 0.35 : 0.7) || flat(c, head) > MAX_REACH) continue;
+          if (blockers.some((bl) => bl.id !== sp.id && under(bl, c)) || spots.some((q) => flat(q.pos, c) < 0.35)) continue;
+          if (occluded(planes, head, [c[0], c[1] + 0.12, c[2]], floorY, sp.id)) continue;
+          best = c; bestPlane = sp; break;
+        }
       }
+      if (best) break;
     }
-    if (best) push('gate', floorPlane, best, true);
+    if (best) push('gate', bestPlane, best, true);
   }
 
   // 5. window: the sill where he watches the sun. A window, else wall art, else a wall in view.
@@ -331,7 +344,8 @@ function stageOnce(planes: Plane[], head: Vec3): StageResult {
 
 /** Furniture as solid boxes: from the floor up to the surface, plus a back for couches and beds. */
 function solidTop(p: Plane): number {
-  return p.center[1] + (['couch', 'sofa', 'bed'].includes(p.label) ? 0.45 : 0.02);
+  // Couches have a back along their length; a bed is mostly flat (headboard at one end only).
+  return p.center[1] + (['couch', 'sofa'].includes(p.label) ? 0.45 : p.label === 'bed' ? 0.12 : 0.02);
 }
 
 /** True when the straight line from the viewer's eyes to a point passes through furniture. */

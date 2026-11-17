@@ -13,3 +13,5 @@ Every run of app/tests/walkthrough.py, appended automatically: emulated hands (o
 | 2026-11-18T03:48:59 | 79f38f3 | metaQuest3 | sunlit_living_room | knock | FAIL: a returning visit did not find Wick where the chapter ended |
 | 2026-11-18T03:51:19 | 79f38f3 | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; return visit played chapter two to the end |
 | 2026-11-18T03:52:20 | 79f38f3 | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T03:56:58 | 0887645 (uncommitted changes) | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; return visit played chapter two to the end |
+| 2026-11-18T03:58:01 | 0887645 (uncommitted changes) | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
