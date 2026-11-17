@@ -1,0 +1,39 @@
+# Staging break test (seed 20261118)
+
+Test slice: 18 of 30 rooms pass. Our own naive baseline (fixed offsets, no scene data): 0 of 30.
+Tuning rooms (sunlit_living_room, home_office) are listed but not counted. `*` marks a fallback surface.
+
+| Room | Slice | Result | Where each beat landed | Failures | Naive baseline |
+|---|---|---|---|---|---|
+| bedroom | test | pass | table:table ridge:couch sea:floor gate:door window:window | - | fail (7) |
+| bedroom/no-couch | test | pass | table:table ridge:table* sea:floor gate:door window:window | - | fail (6) |
+| bedroom/no-window-door | test | pass | table:table ridge:couch sea:floor gate:wall art* window:wall art* | - | fail (7) |
+| bedroom/floor-walls-only | test | FAIL | table:floor* sea:floor gate:wall* window:wall* | ridge: not placed | fail (4) |
+| conference_room | test | pass | table:table ridge:table* sea:floor gate:door window:window | - | fail (4) |
+| conference_room/no-couch | test | pass | table:table ridge:table* sea:floor gate:door window:window | - | fail (4) |
+| conference_room/no-window-door | test | pass | table:table ridge:table* sea:floor gate:wall art* window:wall* | - | fail (4) |
+| conference_room/floor-walls-only | test | FAIL | table:floor* sea:floor gate:wall* window:wall* | ridge: not placed | fail (3) |
+| home_office | tuning | pass | table:table ridge:couch sea:floor gate:door window:window | - | fail (4) |
+| home_office/no-couch | test | pass | table:table ridge:desk* sea:floor gate:door window:window | - | fail (5) |
+| home_office/no-window-door | test | pass | table:table ridge:couch sea:floor gate:wall art* window:wall art* | - | fail (4) |
+| home_office/floor-walls-only | test | FAIL | table:floor* sea:floor gate:wall* window:wall* | ridge: not placed | fail (4) |
+| kitchen | test | pass | table:table ridge:table* sea:floor gate:door window:window | - | fail (7) |
+| kitchen/no-couch | test | pass | table:table ridge:table* sea:floor gate:door window:window | - | fail (7) |
+| kitchen/no-window-door | test | FAIL | table:table ridge:table* sea:floor gate:wall art* window:wall* | window: hidden under table p1 | fail (7) |
+| kitchen/floor-walls-only | test | FAIL | table:floor* sea:floor gate:wall* window:wall* | ridge: not placed | fail (4) |
+| music_studio | test | pass | table:table ridge:couch sea:floor gate:door window:window | - | fail (4) |
+| music_studio/no-couch | test | pass | table:table ridge:desk* sea:floor gate:door window:window | - | fail (5) |
+| music_studio/no-window-door | test | pass | table:table ridge:couch sea:floor gate:wall* window:wall* | - | fail (4) |
+| music_studio/floor-walls-only | test | FAIL | table:floor* sea:floor gate:wall* window:wall* | ridge: not placed | fail (4) |
+| open_office | test | pass | table:desk ridge:couch sea:floor gate:door window:window | - | fail (5) |
+| open_office/no-couch | test | pass | table:desk ridge:table* sea:floor gate:door window:window | - | fail (6) |
+| open_office/no-window-door | test | pass | table:desk ridge:couch sea:floor gate:wall* window:wall* | - | fail (5) |
+| open_office/floor-walls-only | test | FAIL | table:floor* sea:floor gate:wall* window:wall* | ridge: not placed | fail (4) |
+| open_studio | test | FAIL | table:floor* sea:floor gate:door window:window | ridge: not placed | fail (4) |
+| open_studio/no-couch | test | FAIL | table:floor* sea:floor gate:door window:window | ridge: not placed | fail (4) |
+| open_studio/no-window-door | test | FAIL | table:floor* sea:floor gate:wall art* window:wall* | ridge: not placed | fail (4) |
+| open_studio/floor-walls-only | test | FAIL | table:floor* sea:floor gate:wall* window:wall* | ridge: not placed | fail (4) |
+| sunlit_living_room | tuning | pass | table:table ridge:couch sea:floor gate:door window:window | - | fail (4) |
+| sunlit_living_room/no-couch | test | pass | table:table ridge:table* sea:floor gate:door window:window | - | fail (5) |
+| sunlit_living_room/no-window-door | test | pass | table:table ridge:couch sea:floor gate:wall art* window:wall art* | - | fail (4) |
+| sunlit_living_room/floor-walls-only | test | FAIL | table:floor* sea:floor gate:wall* window:wall* | ridge: not placed | fail (4) |

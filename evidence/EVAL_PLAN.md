@@ -50,4 +50,5 @@ Then one card per claim:
 Then a short limits paragraph, in numbers: zero real users, the interval, the emulated rooms, and the next real test (the same staging on real Quest 3 room scans), with the metric and threshold that would change the conclusion.
 
 ## Changes after the first run
-None yet.
+- 2026-11-17, run 1: 18 of 30 test rooms passed (95% interval 42.3% to 75.4%); results kept in evidence/staging-results-run1.md. Failures: 11 rooms with no raised surface (open_studio and every floor-walls-only copy) got no "ridge" spot; kitchen/no-window-door put the fallback window spot under a table. Fixes in app/src/room/stage.ts: an open-floor ridge walk when no raised surface exists; the window spot now searches along the wall for a point not under furniture. Run 2 (the one allowed repeat): 30 of 30 (88.6% to 100%), evidence/staging-results.md. The plan's metric, threshold and data did not change.
+- Note on the data: the 8 room scans are captured from the emulator by evidence/capture_rooms.py into evidence/rooms/*.json (not by the eval script itself, as the plan first said), so the rerun is offline and exact. The degraded copies are derived from the same rooms, so the 30 cases are not independent rooms; the honest independent count is the 6 untuned scans.
