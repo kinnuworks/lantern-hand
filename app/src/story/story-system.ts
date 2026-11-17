@@ -274,6 +274,7 @@ export class StorySystem extends createSystem({}) {
   }
 
   private waitLit(spot: Spot): Promise<void> {
+    console.log(`TARGET ${spot.beat}`);
     this.target = spot;
     this.litFor = 0;
     this.waitingFor = 0;
@@ -380,6 +381,9 @@ export class StorySystem extends createSystem({}) {
         const inside = Math.abs((tip.x - plane.center[0]) * plane.axisX[0] + (tip.z - plane.center[2]) * plane.axisX[2]) < plane.halfX + 0.05 &&
           Math.abs((tip.x - plane.center[0]) * plane.axisZ[0] + (tip.z - plane.center[2]) * plane.axisZ[2]) < plane.halfZ + 0.05;
         const down = inside && dy < 0.025;
+        if (DEBUG && Math.floor(this.waitingFor * 2) !== Math.floor((this.waitingFor - dt) * 2)) {
+          console.log('KNOCKDBG ' + JSON.stringify({ hand: h === this.hands.right ? 'right' : 'left', dy: r2(dy), inside, down, up: this.tipWasUp, tip: tip.toArray().map(r2), plane: plane.center.map(r2) }));
+        }
         const now = performance.now() / 1000;
         if (down && this.tipWasUp) {
           this.knocks = this.knocks.filter((k) => now - k < 1.5);

@@ -42,7 +42,7 @@ def fail(msg):
 cli("browser", "reload"); time.sleep(4)
 
 call("set-transform", {"device": "headset", "position": {"x": 0, "y": 1.2, "z": 0}})
-cli("xr", "enter"); time.sleep(1)
+cli("browser", "interact", "--input-json", json.dumps({"steps": [{"action": "click", "locator": {"role": "button", "name": "Enter"}}]})); time.sleep(2)
 call("set-input-mode", {"mode": "hand"})
 call("set-transform", {"device": "headset", "position": {"x": 0, "y": 1.2, "z": 0}})
 
@@ -80,7 +80,7 @@ if args.gaze:
 # Relaxed hand first (no lantern), then open it.
 t_enter = time.time()
 call("set-hand-pose", {"device": "hand-right", "poseId": "default"})
-aim([0, 0.5, -1.0])
+aim([1.5, 1.6, -1.2] if args.knock else [0, 0.5, -1.0])  # knock mode: keep the light off the table
 time.sleep(6)
 shot("01-before-lantern")
 call("set-hand-pose", {"device": "hand-right", "poseId": "open", "duration": 0.4})
@@ -95,6 +95,7 @@ if args.knock:
     tb = spots[0]["pos"]
     call("set-hand-pose", {"device": "hand-right", "poseId": "fist"})  # a knock is a closed hand: no lantern light
     t = time.time()
+    while time.time() - t < 40 and not logs("^TARGET table"): time.sleep(1)
     while time.time() - t < 40 and not logs("^KNOCK"):
         for _ in range(2):
             call("set-transform", {"device": "hand-right", "anchor": "index-tip", "position": {"x": tb[0] + 0.1, "y": tb[1] + 0.08, "z": tb[2] + 0.05}, "orientation": {"fingers": [0, -0.3, -0.95], "palm": "down"}})
@@ -124,7 +125,7 @@ shot("04-end")
 # Coming back: reload and he should be waiting where the chapter ended.
 SINCE[0] = int(time.time() * 1000)
 cli("browser", "reload"); time.sleep(4)
-cli("xr", "enter"); time.sleep(1)
+cli("browser", "interact", "--input-json", json.dumps({"steps": [{"action": "click", "locator": {"role": "button", "name": "Enter"}}]})); time.sleep(2)
 call("set-input-mode", {"mode": "hand"})
 t = time.time()
 while time.time() - t < 30 and not logs("^RETURN_VISIT"): time.sleep(1.5)
