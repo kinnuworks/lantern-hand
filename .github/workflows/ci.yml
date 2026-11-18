@@ -16,6 +16,10 @@ jobs:
           cache-dependency-path: app/package-lock.json
       - name: Install
         run: npm ci
+        env:
+          # The SDK's reference tooling pulls onnxruntime-node; CI has no GPU, so skip its CUDA download.
+          npm_config_onnxruntime_node_install_cuda: skip
+          ONNXRUNTIME_NODE_INSTALL_CUDA: skip
         working-directory: app
       - name: Typecheck
         run: npm run typecheck
