@@ -62,6 +62,7 @@ export class StorySystem extends createSystem({}) {
   private handHint: Mesh | null = null;
   private knocks: number[] = [];
   private tipWasUp = true;
+  private knocked = false; // two knocks on the table wake him without the light
   private moves: Move[] = [];
   private bob = 0;
   private walkAudio: PositionalAudio | null = null;
@@ -345,6 +346,7 @@ export class StorySystem extends createSystem({}) {
     console.log(`TARGET ${spot.beat} ${JSON.stringify(spot.pos)}`);
     this.target = spot;
     this.litFor = 0;
+    this.knocked = false;
     this.waitingFor = 0;
     this.hinted = false;
     this.glow.visible = true;
@@ -474,7 +476,7 @@ export class StorySystem extends createSystem({}) {
             this.knocks = [];
             void this.sound.at(this.traveller, SFX.knock);
             console.log('KNOCK');
-            this.litFor = LIT_DWELL; // counts as lighting him
+            this.knocked = true;
           }
         }
         this.tipWasUp = dy > 0.05 ? true : down ? false : this.tipWasUp;
@@ -532,10 +534,11 @@ export class StorySystem extends createSystem({}) {
         this.hinted = true;
         void this.say(LINES.hintPoint);
       }
-      if (this.litFor >= dwell || this.waitingFor > AUTO_AFTER) {
+      if (this.knocked || this.litFor >= dwell || this.waitingFor > AUTO_AFTER) {
         const done = this.onLit;
         this.onLit = null;
-        console.log(`BEAT_LIT ${this.target.beat} ${this.litFor >= dwell ? 'by-light' : 'auto'}`);
+        console.log(`BEAT_LIT ${this.target.beat} ${this.knocked ? 'by-knock' : this.litFor >= dwell ? 'by-light' : 'auto'}`);
+        this.knocked = false;
         void this.sound.at(this.glow, SFX.chime, { volume: 0.5 });
         done();
       }
