@@ -127,8 +127,13 @@ if args.knock:
             time.sleep(0.25)
             call("set-transform", {"device": "hand-right", "anchor": "index-tip", "position": {"x": tb[0] + 0.1, "y": tb[1] + 0.005, "z": tb[2] + 0.05}, "orientation": {"fingers": [0, -0.3, -0.95], "palm": "down"}})
             time.sleep(0.25)
-    if not logs("^KNOCK"): fail("two knocks on the table did not wake him")
-    print("KNOCK PASS: two knuckle knocks on the real table woke him")
+    if not logs("^KNOCK"): fail("two knocks on the table were not detected")
+    # The knock alone must wake him: the hand is still a fist (no lantern light) here.
+    t = time.time()
+    while time.time() - t < 3 and not [m for m in logs("^BEAT_LIT ") if m.split()[1] == "table"]: time.sleep(0.25)
+    woke = [m for m in logs("^BEAT_LIT ") if m.split()[1] == "table"]
+    if not woke or woke[-1].split()[2] != "by-knock": fail(f"two knocks did not wake him by themselves: {woke[-1] if woke else 'no BEAT_LIT table within 3 s'}")
+    print("KNOCK PASS: two knuckle knocks on the real table woke him, with no lantern light")
     call("set-hand-pose", {"device": "hand-right", "poseId": "open"})
 for s in spots:
     t = time.time()
@@ -140,7 +145,7 @@ for s in spots:
     how = done[-1].split()[2]
     lit.append((s["beat"], how))
     time.sleep(2.5); shot(f"03-{s['beat']}")
-    if how != "by-light": fail(f"beat {s['beat']} advanced by timeout, not by the hand's light")
+    if how != "by-light" and not (args.knock and s["beat"] == "table" and how == "by-knock"): fail(f"beat {s['beat']} advanced by timeout, not by the hand's light")
 
 t = time.time()
 while time.time() - t < 90 and not logs("^CHAPTER_END"): time.sleep(2)
