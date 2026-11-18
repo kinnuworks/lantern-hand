@@ -51,7 +51,7 @@ Walkthroughs of both chapters in the emulator, driven with emulated hands only: 
 
 ## What doesn't work yet
 
-- Tested only in Meta's emulator, not yet on a physical headset, so frame rate and real-room behaviour are unverified.
+- Tested only in Meta's emulator, not yet on a physical headset, so frame rate and real-room behaviour are unverified. What we did measure, in the emulator: 28 to 38 draw calls and about 20,500 triangles per frame across both chapters.
 - Two chapters; chapter three isn't written yet.
 - The emulator rooms report labelled flat surfaces but no labelled furniture meshes, so staging uses flat surfaces only.
 

@@ -44,6 +44,7 @@ const STORE_KEY = 'lantern-hand:v1';
 export class StorySystem extends createSystem({}) {
   private hands = new Hands();
   private keeper = new AnchorKeeper();
+  private perfClock = 0;
   private sound!: Sound;
   private caption!: Caption;
   private planes: Plane[] = [];
@@ -395,6 +396,13 @@ export class StorySystem extends createSystem({}) {
     if (this.phase === 'waiting-room' || !this.traveller) return;
     this.hands.update(this.renderer, this.player);
     this.keeper.update(this.renderer, this.player);
+    // Frame cost for the evidence log: what the renderer drew last frame, every 5 s while the story runs.
+    this.perfClock += dt;
+    if (this.perfClock > 5) {
+      this.perfClock = 0;
+      const info = this.renderer.info;
+      console.log('PERF ' + JSON.stringify({ calls: info.render.calls, triangles: info.render.triangles, geometries: info.memory.geometries, textures: info.memory.textures, phase: this.phase, beat: this.target?.beat ?? null }));
+    }
 
     // Night veil: dark during the story, lifts at dawn.
     const nightMat = this.night.material as MeshBasicMaterial;
