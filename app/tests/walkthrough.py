@@ -146,6 +146,9 @@ t = time.time()
 while time.time() - t < 90 and not logs("^CHAPTER_END"): time.sleep(2)
 if not logs("^CHAPTER_END"): fail("chapter did not end")
 shot("04-end")
+t = time.time()
+while time.time() - t < 15 and not logs("^ANCHOR_SAVED"): time.sleep(1)
+if not logs("^ANCHOR_SAVED"): fail("his resting place was not pinned with a persistent anchor")
 
 # Coming back: reload and he should be waiting where the chapter ended.
 SINCE[0] = int(time.time() * 1000)
@@ -155,6 +158,9 @@ call("set-input-mode", {"mode": "hand"})
 t = time.time()
 while time.time() - t < 30 and not logs("^RETURN_VISIT"): time.sleep(1.5)
 if not logs("^RETURN_VISIT"): fail("a returning visit did not find Wick where the chapter ended")
+t = time.time()
+while time.time() - t < 15 and not logs("^ANCHOR_RESTORED|^ANCHOR_NONE"): time.sleep(1)
+if not logs("^ANCHOR_RESTORED"): fail("the persistent anchor from last visit was not restored: " + " ".join(logs("^ANCHOR_NONE")))
 shot("05-return")
 
 # Chapter two: three stars on the wall above the sill, then the climb to the moon.
@@ -175,6 +181,6 @@ if not logs("^CHAPTER_END 2"): fail("chapter two did not end")
 shot("06-chapter-two")
 errs = [m for m in logs("error|Error") if "favicon" not in m]
 print("lit:", lit)
-record("PASS: lantern lit by an open hand; every beat lit by the hand's light" + ("; two knocks woke him" if args.knock else "") + "; chapter one ended; return visit played chapter two to the end")
+record("PASS: lantern lit by an open hand; every beat lit by the hand's light" + ("; two knocks woke him" if args.knock else "") + "; chapter one ended; persistent anchor restored; return visit played chapter two to the end")
 print("WALKTHROUGH PASS: lantern lit by an open hand; every beat lit by the hand's light; chapter ended; return visit played chapter two to the end",
       f"({len(errs)} console lines matching 'error')")

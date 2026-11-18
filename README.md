@@ -29,6 +29,7 @@ A chapter takes about six minutes. Wick stays where you left him: come back and 
 - **Scene understanding (WebXR plane detection):** every story beat is placed on a labelled surface from your room scan, kept in front of you and never hidden behind furniture, with a fallback for each missing label. No room scan at all gives a small paper stand-in room. [`app/src/room/stage.ts`](app/src/room/stage.ts)
 - **Hand tracking (WebXR Hand Input):** an open palm lights the lantern and the direction your hand points casts the light, with a 14 degree aim assist because hand tracking is noisy. Two knocks on the real table wake him. No pinch is used, so the system menu gesture never fires by accident. [`app/src/story/hands.ts`](app/src/story/hands.ts)
 - **Passthrough (immersive-ar):** night falls over your real room and lifts at dawn. [`app/src/story/story-system.ts`](app/src/story/story-system.ts)
+- **Persistent anchors:** at the end of chapter one his resting place is pinned to your real room with a WebXR persistent anchor, so next visit he's on the same spot. [`app/src/story/anchor-keeper.ts`](app/src/story/anchor-keeper.ts)
 - **Gaze:** with no hands in view, looking at the glow lights it, so the story can be played without hands.
 - **Meta VR Glasses field of view:** captions and beats stay inside the design area; both chapters pass in the emulator's Meta VR Glasses profile.
 - **Spatial audio:** footsteps, wind, water and the gate come from where they happen. [`app/src/story/sound.ts`](app/src/story/sound.ts)

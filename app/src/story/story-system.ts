@@ -17,6 +17,7 @@ import type { BeatId, Plane, Spot, Vec3 } from '../room/types.js';
 import { Caption } from './caption.js';
 import { haloMat, markerMat, poolMat } from './glow.js';
 import { Hands } from './hands.js';
+import { AnchorKeeper } from './anchor-keeper.js';
 import { makeCutout, setCutoutImage } from './cutout.js';
 import { ART, askLine, C2, LINES, MUSIC, ORDER, SFX } from './script.js';
 import type { Line } from './script.js';
@@ -42,6 +43,7 @@ const STORE_KEY = 'lantern-hand:v1';
  */
 export class StorySystem extends createSystem({}) {
   private hands = new Hands();
+  private keeper = new AnchorKeeper();
   private sound!: Sound;
   private caption!: Caption;
   private planes: Plane[] = [];
@@ -245,6 +247,8 @@ export class StorySystem extends createSystem({}) {
     await this.say(LINES.bye);
     this.caption.show('Lantern Hand  ·  Chapter one: The long way to the window');
     const save = readSave(); save.finished = true; save.chapter = Math.max(save.chapter, 1); writeSave(save);
+    // Pin his resting place to the real room so next time he is exactly where you left him.
+    this.keeper.save(this.traveller.getWorldPosition(new Vector3()));
     this.phase = 'done';
     console.log('CHAPTER_END');
   }
@@ -254,7 +258,12 @@ export class StorySystem extends createSystem({}) {
   /** Chapter two: from the windowsill, hang three stars on the wall and climb to the moon. */
   private async chapterTwo(again: boolean) {
     console.log('RETURN_VISIT');
-    const w = this.spots.get('window') ?? this.spots.get('table')!;
+    const staged = this.spots.get('window') ?? this.spots.get('table')!;
+    // Where you left him last night, from the persistent anchor if the headset still knows the spot.
+    const pinned = await this.keeper.restore();
+    const w: Spot = pinned && pinned.distanceTo(new Vector3(...staged.pos)) < 1.5
+      ? { ...staged, pos: [pinned.x, pinned.y, pinned.z] }
+      : staged;
     await this.placeTraveller(w, ART.sitting);
     if (again) {
       this.caption.show('Chapter three is still being written. Here is chapter two again.');
@@ -385,6 +394,7 @@ export class StorySystem extends createSystem({}) {
     this.caption.update(dt);
     if (this.phase === 'waiting-room' || !this.traveller) return;
     this.hands.update(this.renderer, this.player);
+    this.keeper.update(this.renderer, this.player);
 
     // Night veil: dark during the story, lifts at dawn.
     const nightMat = this.night.material as MeshBasicMaterial;
