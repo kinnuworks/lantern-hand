@@ -121,13 +121,13 @@ if args.knock:
     call("set-hand-pose", {"device": "hand-right", "poseId": "fist"})  # a knock is a closed hand: no lantern light
     t = time.time()
     while time.time() - t < 40 and not logs("^TARGET table"): time.sleep(1)
-    while time.time() - t < 40 and not logs("^KNOCK"):
+    while time.time() - t < 40 and not logs("^KNOCK$"):
         for _ in range(2):
             call("set-transform", {"device": "hand-right", "anchor": "index-tip", "position": {"x": tb[0] + 0.1, "y": tb[1] + 0.08, "z": tb[2] + 0.05}, "orientation": {"fingers": [0, -0.3, -0.95], "palm": "down"}})
             time.sleep(0.25)
             call("set-transform", {"device": "hand-right", "anchor": "index-tip", "position": {"x": tb[0] + 0.1, "y": tb[1] + 0.005, "z": tb[2] + 0.05}, "orientation": {"fingers": [0, -0.3, -0.95], "palm": "down"}})
             time.sleep(0.25)
-    if not logs("^KNOCK"): fail("two knocks on the table were not detected")
+    if not logs("^KNOCK$"): fail("two knocks on the table were not detected")
     # The knock alone must wake him: the hand is still a fist (no lantern light) here.
     t = time.time()
     while time.time() - t < 3 and not [m for m in logs("^BEAT_LIT ") if m.split()[1] == "table"]: time.sleep(0.25)
