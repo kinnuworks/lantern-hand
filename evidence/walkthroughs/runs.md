@@ -15,3 +15,7 @@ Every run of app/tests/walkthrough.py, appended automatically: emulated hands (o
 | 2026-11-18T03:52:20 | 79f38f3 | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
 | 2026-11-18T03:56:58 | 0887645 (uncommitted changes) | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; return visit played chapter two to the end |
 | 2026-11-18T03:58:01 | 0887645 (uncommitted changes) | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T04:00:54 | 480339b | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; return visit played chapter two to the end |
+| 2026-11-18T04:02:11 | 480339b | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T04:04:34 | 480339b | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; return visit played chapter two to the end |
+| 2026-11-18T04:05:39 | 480339b | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
