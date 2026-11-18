@@ -35,3 +35,24 @@ Every run of app/tests/walkthrough.py, appended automatically: emulated hands (o
 | 2026-11-18T16:18:11 | 0242ea3 | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
 | 2026-11-18T16:42:15 | 0242ea3 | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; persistent anchor restored; return visit played chapter two to the end |
 | 2026-11-18T16:43:16 | 0242ea3 | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T16:45:30 | deb286d | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; persistent anchor restored; return visit played chapter two to the end |
+| 2026-11-18T16:46:31 | deb286d | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T16:48:23 | deb286d | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; persistent anchor restored; return visit played chapter two to the end |
+| 2026-11-18T16:49:24 | deb286d | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T19:30:05 | deb286d | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; persistent anchor restored; return visit played chapter two to the end |
+| 2026-11-18T19:31:07 | deb286d | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T19:33:06 | deb286d | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; persistent anchor restored; return visit played chapter two to the end |
+| 2026-11-18T19:34:07 | deb286d | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T19:40:10 | deb286d | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; persistent anchor restored; return visit played chapter two to the end |
+| 2026-11-18T19:41:12 | deb286d | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T19:43:01 | deb286d | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; persistent anchor restored; return visit played chapter two to the end |
+| 2026-11-18T19:44:02 | deb286d | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T19:46:03 | deb286d | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; persistent anchor restored; return visit played chapter two to the end |
+| 2026-11-18T19:47:06 | deb286d | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T19:48:57 | deb286d | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; persistent anchor restored; return visit played chapter two to the end |
+| 2026-11-18T19:49:58 | deb286d | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
+| 2026-11-18T19:53:23 | d3e7ad5 | metaQuest3 | sunlit_living_room | knock | FAIL: two knocks did not wake him by themselves: no BEAT_LIT table within 3 s |
+| 2026-11-18T19:54:18 | d3e7ad5 (uncommitted changes) | metaQuest3 | sunlit_living_room | knock | FAIL: two knocks did not wake him by themselves: no BEAT_LIT table within 3 s |
+| 2026-11-18T19:56:25 | 53efdff (uncommitted changes) | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; persistent anchor restored; return visit played chapter two to the end |
+| 2026-11-18T19:58:24 | f7fc67c | metaQuest3 | sunlit_living_room | knock | PASS: lantern lit by an open hand; every beat lit by the hand's light; two knocks woke him; chapter one ended; persistent anchor restored; return visit played chapter two to the end |
+| 2026-11-18T19:59:26 | f7fc67c | metaQuest3 | sunlit_living_room | gaze | PASS: every beat lit by looking, no hands |
